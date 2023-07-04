@@ -26,7 +26,7 @@ public:
         try{
             pt::read_json(filename, root);
         }catch(pt::json_parser::json_parser_error& e1){
-            cerr << e1.what();
+            cerr << e1.what() << endl;
             return false;
         }
 
@@ -36,30 +36,30 @@ public:
                 try{
                     tr.from = state.first;
                     tr.input = input.first;
-                    tr.to = input.second.get<string>("state", 0);
-                    tr.output = input.second.get<string>("output", 0);
+                    tr.to = input.second.get<string>("state");
+                    tr.output = input.second.get<string>("output");
                 }catch(pt::ptree_bad_path& e2){
-                    cerr << e2.what();
+                    cerr << e2.what() << endl;
                     return false;
                 }
                 transitions.push_back(tr);
-                if(find(states.begin(), states.end(), tr.from) == states.end())
-                    states.push_back(tr.from);
-                else{
-                    cerr << "Duplicate state" << tr.from;
-                    return false;
-                }
                 if(find(inputs.begin(), inputs.end(), tr.input) == inputs.end())
                     inputs.push_back(tr.input);
                 if(find(outputs.begin(), outputs.end(), tr.output) == outputs.end())
                     outputs.push_back(tr.output);
             }
+            if(find(states.begin(), states.end(), state.first) == states.end())
+                states.push_back(state.first);
+            else{
+                cerr << "Duplicate state: " << state.first << endl;
+                return false;
+            }
         }
 
         try{
-            initial_state = root.get<string>("initial_state", 0);
+            initial_state = root.get<string>("initial_state");
         }catch(pt::ptree_bad_path& e3){
-            cerr << e3.what();
+            cerr << e3.what() << endl;
             return false;
         }
         return true;
@@ -70,22 +70,23 @@ int main(int argc, char *argv[]){
     if(argc > 2){cerr << "Too many arguments"; return 1;}
     if(argc < 2){cerr << "Too few arguments"; return 2;}
     MealyFSM machine;
-    machine.ReadFromJson(argv[1]);
+    if(!machine.ReadFromJson(argv[1])) return 3;
     for(it = machine.states.begin(); it != machine.states.end(); it++)
         cout << *it << " ";
-    cout << "\n";
+    cout << endl;
     for(it = machine.inputs.begin(); it != machine.inputs.end(); it++)
         cout << *it << " ";
-    cout << "\n";
+    cout << endl;
     for(it = machine.outputs.begin(); it != machine.outputs.end(); it++)
         cout << *it << " ";
-    cout << "\n";
+    cout << endl;
     vector<Transition>::iterator i;
     for(i = machine.transitions.begin(); i != machine.transitions.end(); i++){
-        cout << "From: " << i->from << "\n";
-        cout << "Input: " << i->input << "\n";
-        cout << "To: " << i->to << "\n";
-        cout << "Output: " << i->output << "\n\n";
+        cout << "From: " << i->from << endl;
+        cout << "Input: " << i->input << endl;
+        cout << "To: " << i->to << endl;
+        cout << "Output: " << i->output << endl << endl;
     }
+    cout << "Initial state: " << machine.initial_state << endl;
     return 0;
 }
