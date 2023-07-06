@@ -83,7 +83,7 @@ public:
         //Making an array of transitions from a ptree
         for(pt::ptree::value_type& state : root.get_child("transitions")){
             vector<Transition> arr;
-            //Checking if there were duplicate states in Json file as well as adding states into array
+            //Checking if there were duplicate states in Json file as well as adding them into array
             if(find(states.begin(), states.end(), state.first) == states.end())
                 states.push_back(state.first);
             else{
@@ -106,7 +106,12 @@ public:
         }
         //Seeking position of initial_state in states array
         try{
-            initial_state = find(states.begin(), states.end(), root.get<string>("initial_state")) - states.begin();
+            if(find(states.begin(), states.end(), root.get<string>("initial_state")) != states.end())
+                initial_state = find(states.begin(), states.end(), root.get<string>("initial_state")) - states.begin();
+            else{
+                cerr << "Invalid initial_state" << endl;
+                return false;
+            }
         }catch(pt::ptree_bad_path& e3){
             cerr << e3.what() << endl;
             return false;
