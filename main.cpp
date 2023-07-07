@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <stack>
+#include <queue>
 #include <vector>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
@@ -65,16 +66,28 @@ private:
             print(&n->children[i]);
         }
     }
-    void DFS(size_t u, std::vector<bool>& visited, std::vector<std::vector<std::string>>& pred){
-        std::vector<Transition>::iterator it;
-        visited[u] = true;
-        for(it = transitions[u].second.begin(); it != transitions[u].second.end(); it++){
-            if(visited[it->to] == false){
-                pred[it->to] = pred[u];
-                pred[it->to].push_back(it->input);
-                DFS(it->to, visited, pred);
+    std::vector<std::pair<size_t, std::string>> BFS(int u){
+        int v;
+        std::queue<int> q;
+        std::vector<bool> color;
+        std::vector<std::pair<size_t, std::string>> pred(states.size());
+        for(size_t i = 0; i < states.size(); i++)
+            color.push_back(0);
+        color[u] = 1;
+        pred[u] = std::make_pair(0, NULL);
+        q.push(u);
+        while(!q.empty()){
+            v = q.front();
+            q.pop();
+            for(auto it : transitions[v].second){
+                if(!color[it.to]){
+                    pred[it.to] = std::make_pair(v, it.input);
+                    color[it.to] = 1;
+                    q.push(it.to);
+                }
             }
         }
+        return pred;
     }
 public:
     size_t initial_state;
@@ -143,16 +156,20 @@ public:
     }
 
     void StatesInpSeqGen(){
-        std::vector<bool> visited;
-        std::vector<std::vector<std::string>> pred(states.size());
-        std::vector<std::string>::iterator it;
-        for(size_t i = 0; i < states.size(); i++)
-            visited.push_back(false);
-        for(size_t i = 0; i < states.size(); i++)
-            DFS(i, visited, pred);
+        size_t j;
+        std::stack<std::string> s;
+        std::vector<std::pair<size_t, std::string>> pred = BFS(initial_state);
         for(size_t i = 0; i < states.size(); i++){
-            for(it = pred[i].begin(); it != pred[i].end(); it++)
-                std::cout << *it << " ";
+            if(i == initial_state) continue;
+            j = i;
+            while(j != initial_state){
+                s.push(pred[j].second.data());
+                j = pred[j].first;
+            }
+            while(!s.empty()){
+                std::cout << s.top() << " ";
+                s.pop();
+            }
             std::cout << std::endl;
         }
     }
