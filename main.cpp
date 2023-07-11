@@ -23,12 +23,12 @@ private:
     void search(Node *n){
         bool found;
         Node *ptr;
-        for(size_t i = 0; i < transitions[n->state].second.size(); i++){
+        for(auto it : transitions[n->state].second){
             ptr = n;
             found = false;
             //Checking branch possible transitions
             while(ptr != NULL){
-                if(ptr->par != NULL && ptr->par->state == n->state && ptr->state == transitions[n->state].second[i].to && ptr->input == transitions[n->state].second[i].input){
+                if(ptr->par != NULL && ptr->par->state == n->state && ptr->state == it.to && ptr->input == it.input){
                     found = true;
                     break;
                 }
@@ -37,8 +37,8 @@ private:
             //If found adding new transition to the end of the branch
             if(found == false){
                 Node child;
-                child.state = transitions[n->state].second[i].to;
-                child.input = transitions[n->state].second[i].input;
+                child.state = it.to;
+                child.input = it.input;
                 child.par = n;
                 n->children.push_back(child);
             }
@@ -95,7 +95,7 @@ private:
         std::queue<std::pair<size_t, size_t>> q;
         std::vector<std::vector<bool>> color(states.size());
         std::vector<std::vector<std::pair<size_t, size_t>>> pred(states.size());
-        for(size_t i = 0; i < states.size(); i++){
+        for(size_t i = 0; i < transitions.size(); i++){
             for(auto t : transitions[i].second){
                 color[i].push_back(0);
                 pred[i].push_back(std::make_pair(0,0));
@@ -112,12 +112,14 @@ private:
             v = q.front();
             q.pop();
             to = transitions[v.first].second[v.second].to;
-            for(size_t i = 0; i < transitions[to].second.size(); i++){
-                if(!color[to][i]){
-                    input[to][i] = transitions[to].second[i].input;
-                    color[to][i] = 1;
-                    pred[to][i] = std::make_pair(v.first, v.second);
-                    q.push(std::make_pair(to, i));
+            if(to < transitions.size()){
+                for(size_t i = 0; i < transitions[to].second.size(); i++){
+                    if(!color[to][i]){
+                        input[to][i] = transitions[to].second[i].input;
+                        color[to][i] = 1;
+                        pred[to][i] = std::make_pair(v.first, v.second);
+                        q.push(std::make_pair(to, i));
+                    }
                 }
             }
         }
