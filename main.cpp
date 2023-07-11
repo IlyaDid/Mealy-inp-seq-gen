@@ -66,9 +66,9 @@ private:
             print(&n->children[i]);
         }
     }
-    std::vector<std::pair<size_t, std::string>> BFS(int u){
-        int v;
-        std::queue<int> q;
+    std::vector<std::pair<size_t, std::string>> BFSStates(size_t u){
+        size_t v;
+        std::queue<size_t> q;
         std::vector<bool> color;
         std::vector<std::pair<size_t, std::string>> pred(states.size());
         for(size_t i = 0; i < states.size(); i++)
@@ -84,6 +84,40 @@ private:
                     pred[it.to] = std::make_pair(v, it.input);
                     color[it.to] = 1;
                     q.push(it.to);
+                }
+            }
+        }
+        return pred;
+    }
+    std::vector<std::vector<std::pair<size_t, size_t>>> BFSTransitions(size_t u, std::vector<std::vector<std::string>>& input){
+        size_t to;
+        std::pair<size_t, size_t> v;
+        std::queue<std::pair<size_t, size_t>> q;
+        std::vector<std::vector<bool>> color(states.size());
+        std::vector<std::vector<std::pair<size_t, size_t>>> pred(states.size());
+        for(size_t i = 0; i < states.size(); i++){
+            for(auto t : transitions[i].second){
+                color[i].push_back(0);
+                pred[i].push_back(std::make_pair(0,0));
+                input[i].push_back("");
+            }
+        }
+        for(size_t i = 0; i < transitions[u].second.size(); i++){
+            color[u][i] = 1;
+            pred[u][i] = std::make_pair(u, i);
+            input[u][i] = transitions[u].second[i].input;
+            q.push(std::make_pair(u, i));
+        }
+        while(!q.empty()){
+            v = q.front();
+            q.pop();
+            to = transitions[v.first].second[v.second].to;
+            for(size_t i = 0; i < transitions[to].second.size(); i++){
+                if(!color[to][i]){
+                    input[to][i] = transitions[to].second[i].input;
+                    color[to][i] = 1;
+                    pred[to][i] = std::make_pair(v.first, v.second);
+                    q.push(std::make_pair(to, i));
                 }
             }
         }
@@ -106,17 +140,15 @@ public:
         //Making an array of transitions from a ptree
         for(pt::ptree::value_type& state : root.get_child("transitions")){
             std::vector<Transition> arr;
-            //Checking if there were duplicate states in Json file as well as adding them into array
+            //Adding states into array
             if(find(states.begin(), states.end(), state.first) == states.end())
                 states.push_back(state.first);
-            else{
-                std::cerr << "Duplicate state: " << state.first << std::endl;
-                return false;
-            }
             //Copying each transition from ptree to structure
             for(pt::ptree::value_type& input : state.second){
                 Transition tr;
                 try{
+                    if(find(states.begin(), states.end(), input.second.get<std::string>("state")) == states.end())
+                        states.push_back(input.second.get<std::string>("state"));
                     tr.input = input.first;
                     tr.to = find(states.begin(), states.end(), input.second.get<std::string>("state")) - states.begin();
                 }catch(pt::ptree_bad_path& e2){
@@ -158,7 +190,7 @@ public:
     void StatesInpSeqGen(){
         size_t j;
         std::stack<std::string> s;
-        std::vector<std::pair<size_t, std::string>> pred = BFS(initial_state);
+        std::vector<std::pair<size_t, std::string>> pred = BFSStates(initial_state);
         for(size_t i = 0; i < states.size(); i++){
             if(i == initial_state) continue;
             j = i;
@@ -175,7 +207,26 @@ public:
     }
 
     void TransitionsInpSeqGen(){
-
+        std::vector<std::vector<std::string>> input(states.size());
+        std::vector<std::vector<std::pair<size_t, size_t>>> pred = BFSTransitions(initial_state, input);
+        std::stack<std::string> s;
+        std::pair<size_t, size_t> k;
+        for(size_t i = 0; i < states.size(); i++){
+            for(size_t j = 0; j < transitions[i].second.size(); j++){
+                k = std::make_pair(i, j);
+                while(pred[k.first][k.second].first != k.first){
+                    s.push(input[k.first][k.second]);
+                    k = pred[k.first][k.second];
+                    //std::cout << k.first << " " << k.second << " " << input[k.first][k.second] << std::endl;
+                }
+                s.push(input[k.first][k.second]);
+                while(!s.empty()){
+                    std::cout << s.top() << " ";
+                    s.pop();
+                }
+                std::cout << std::endl;
+            }
+        }
     }
 };
 int main(int argc, char *argv[]){
@@ -183,6 +234,6 @@ int main(int argc, char *argv[]){
     if(argc < 2){std::cerr << "Too few arguments"; return 2;}
     MealyFSM machine;
     if(!machine.ReadFromJson(argv[1])) return 3;
-    machine.StatesInpSeqGen();
+    machine.TransitionsInpSeqGen();
     return 0;
 }
