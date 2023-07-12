@@ -1,11 +1,17 @@
 #include <iostream>
 #include <string>
 #include <stack>
+#include <list>
 #include <queue>
 #include <vector>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <boost/program_options.hpp>
+#include <boost/program_options/value_semantic.hpp>
+#include <boost/program_options/variables_map.hpp>
+#include <getopt.h>
 namespace pt = boost::property_tree;
+namespace po = boost::program_options;
 class MealyFSM{
 private:
     class Transition{
@@ -193,6 +199,27 @@ public:
         size_t j;
         std::stack<std::string> s;
         std::vector<std::pair<size_t, std::string>> pred = BFSStates(initial_state);
+
+        /*bool matrix[states.size()][states.size()];
+        for(size_t i = 0; i < states.size(); i++){
+            for(auto& it : matrix[i])
+                it = 0;
+            j = i;
+            while(j != initial_state){
+                matrix[i][j] = 1;
+                j = pred[j].first;
+            }
+        }
+        std::vector<std::vector<bool>> arr(states.size());
+        for(size_t j = 0; j < states.size(); j++){
+            for(size_t i = 0; i < states.size(); i++){
+                if(matrix[i][j])
+                    arr[j].push_back(i);
+            }
+        }
+        std::list<size_t> u;
+        u.assign(states.begin(), states.end());*/
+
         for(size_t i = 0; i < states.size(); i++){
             if(i == initial_state) continue;
             j = i;
@@ -219,7 +246,6 @@ public:
                 while(pred[k.first][k.second].first != k.first){
                     s.push(input[k.first][k.second]);
                     k = pred[k.first][k.second];
-                    //std::cout << k.first << " " << k.second << " " << input[k.first][k.second] << std::endl;
                 }
                 s.push(input[k.first][k.second]);
                 while(!s.empty()){
@@ -232,10 +258,30 @@ public:
     }
 };
 int main(int argc, char *argv[]){
-    if(argc > 2){std::cerr << "Too many arguments"; return 1;}
-    if(argc < 2){std::cerr << "Too few arguments"; return 2;}
+    po::options_description desc("Options");
+    std::string mode;
+    std::string file;
+    po::variables_map vm;
+    desc.add_options()
+        ("mode", po::value<std::string>(&mode), "Select the mode - states, transitions, paths")
+        ("file", po::value<std::string>(&file), "Provide program with a .json file to work")
+    ;
+    po::parsed_options parsed = po::command_line_parser(argc, argv).options(desc).run();
+    po::store(parsed, vm);
+    po::notify(vm);
+    if(!vm.count("file")){std::cerr<<"Missing a filename"<<std::endl;return 1;}
+    if(!vm.count("mode")){std::cerr<<"Missing mode"<<std::endl;return 2;}
     MealyFSM machine;
-    if(!machine.ReadFromJson(argv[1])) return 3;
-    machine.TransitionsInpSeqGen();
+    if(!machine.ReadFromJson(file)) return 3;
+    if(mode == "states")
+        machine.StatesInpSeqGen();
+    else if(mode == "transitions")
+        machine.TransitionsInpSeqGen();
+    else if(mode == "paths")
+        machine.PathsInpSeqGen();
+    else{
+        std::cerr << "Invalid mode" << std::endl;
+        return 3;
+    }
     return 0;
 }
