@@ -131,6 +131,34 @@ private:
         }
         return pred;
     }
+    std::vector<int> greedy_set_cover(std::vector<std::vector<bool>> matrix){
+        std::set<int> u;
+        std::vector<int> res;
+        std::pair<size_t, size_t> max = std::make_pair(0, 0);
+        size_t cur;
+        for(size_t i = 0; i < matrix.size(); i++)
+            u.insert(i);
+        while(!u.empty()){
+            max.first = 0;
+            for(size_t i = 0; i < matrix.size(); i++){
+                cur = 0;
+                for(size_t j = 0; j < matrix[i].size(); j++){
+                    if(matrix[i][j] && u.find(j) != u.end())
+                        cur++;
+                }
+                if(cur > max.first){
+                    max.first = cur;
+                    max.second = i;
+                }
+            }
+            for(size_t i = 0; i < matrix.size(); i++){
+                if(matrix[max.second][i])
+                    u.erase(i);
+            }
+            res.push_back(max.second);
+        }
+        return res;
+    }
 public:
     size_t initial_state;
     std::vector<std::string> states;
@@ -199,30 +227,25 @@ public:
         size_t j;
         std::stack<std::string> s;
         std::vector<std::pair<size_t, std::string>> pred = BFSStates(initial_state);
-
-        /*bool matrix[states.size()][states.size()];
+        std::vector<int> cover;
+        std::vector<std::vector<bool>> matrix(states.size());
         for(size_t i = 0; i < states.size(); i++){
-            for(auto& it : matrix[i])
-                it = 0;
+            if(i == initial_state) continue;
+            for(size_t k = 0; k < states.size(); k++){
+                if(k == initial_state)
+                    matrix[i].push_back(1);
+                else
+                    matrix[i].push_back(0);
+            }
             j = i;
             while(j != initial_state){
                 matrix[i][j] = 1;
                 j = pred[j].first;
             }
         }
-        std::vector<std::vector<bool>> arr(states.size());
-        for(size_t j = 0; j < states.size(); j++){
-            for(size_t i = 0; i < states.size(); i++){
-                if(matrix[i][j])
-                    arr[j].push_back(i);
-            }
-        }
-        std::list<size_t> u;
-        u.assign(states.begin(), states.end());*/
-
-        for(size_t i = 0; i < states.size(); i++){
-            if(i == initial_state) continue;
-            j = i;
+        cover = greedy_set_cover(matrix);
+        for(size_t i = 0; i < cover.size(); i++){
+            j = cover[i];
             while(j != initial_state){
                 s.push(pred[j].second.data());
                 j = pred[j].first;
