@@ -131,31 +131,43 @@ private:
         }
         return pred;
     }
-    std::vector<int> greedy_set_cover(std::vector<std::vector<bool>> matrix){
-        std::set<int> u;
-        std::vector<int> res;
-        std::pair<size_t, size_t> max = std::make_pair(0, 0);
+    std::vector<size_t> greedy_set_cover(std::vector<std::vector<bool>> matrix){
+        std::set<size_t> u;
+        std::vector<size_t> res;
+        std::vector<size_t> max(3);
         size_t cur;
+        size_t size;
         for(size_t i = 0; i < matrix.size(); i++)
             u.insert(i);
         while(!u.empty()){
-            max.first = 0;
+            max[0] = 0;
             for(size_t i = 0; i < matrix.size(); i++){
                 cur = 0;
+                size = 0;
                 for(size_t j = 0; j < matrix[i].size(); j++){
-                    if(matrix[i][j] && u.find(j) != u.end())
-                        cur++;
+                    if(matrix[i][j]){
+                        size++;
+                        if(u.find(j) != u.end())
+                            cur++;
+                    }
                 }
-                if(cur > max.first){
-                    max.first = cur;
-                    max.second = i;
+                if(cur > max[0]){
+                    max[0] = cur;
+                    max[1] = i;
+                    max[2] = size;
+                }else if(cur == max[0]){
+                    if(size < max[2]){
+                        max[1] = i;
+                        max[2] = size;
+                    }
                 }
+                //std::cout << *u.begin() << std::endl;
             }
             for(size_t i = 0; i < matrix.size(); i++){
-                if(matrix[max.second][i])
+                if(matrix[max[1]][i])
                     u.erase(i);
             }
-            res.push_back(max.second);
+            res.push_back(max[1]);
         }
         return res;
     }
@@ -193,7 +205,18 @@ public:
                 }
                 arr.push_back(tr);
             }
-            transitions.push_back(make_pair(states.size() - 1, arr));
+            transitions.push_back(std::make_pair(find(states.begin(), states.end(), state.first) - states.begin(), arr));
+        }
+        bool found;
+        for(size_t i = 0; i < states.size(); i++){
+            std::vector<Transition> arr;
+            found = 0;
+            for(auto it : transitions){
+                if(it.first == i)
+                    found = 1;
+            }
+            if(!found)
+                transitions.push_back(std::make_pair(i, arr));
         }
         //Seeking position of initial_state in states array
         try{
@@ -227,7 +250,7 @@ public:
         size_t j;
         std::stack<std::string> s;
         std::vector<std::pair<size_t, std::string>> pred = BFSStates(initial_state);
-        std::vector<int> cover;
+        std::vector<size_t> cover;
         std::vector<std::vector<bool>> matrix(states.size());
         for(size_t i = 0; i < states.size(); i++){
             if(i == initial_state) continue;
@@ -244,8 +267,8 @@ public:
             }
         }
         cover = greedy_set_cover(matrix);
-        for(size_t i = 0; i < cover.size(); i++){
-            j = cover[i];
+        for(auto it : cover){
+            j = it;
             while(j != initial_state){
                 s.push(pred[j].second.data());
                 j = pred[j].first;
@@ -263,20 +286,65 @@ public:
         std::vector<std::vector<std::pair<size_t, size_t>>> pred = BFSTransitions(initial_state, input);
         std::stack<std::string> s;
         std::pair<size_t, size_t> k;
-        for(size_t i = 0; i < states.size(); i++){
+        std::vector<size_t> sz;
+        size_t size = 0;
+        size_t buf = 0;
+        size_t pos = 0;
+        for(auto it : transitions){
+            sz.push_back(it.second.size());
+            size += it.second.size();
+        }
+        std::vector<std::vector<bool>> matrix;
+        std::vector<size_t> p(size);
+        std::vector<std::string> inp(size);
+        for(size_t i = 0; i < transitions.size(); i++){
             for(size_t j = 0; j < transitions[i].second.size(); j++){
+                std::vector<bool> arr(size);
                 k = std::make_pair(i, j);
                 while(pred[k.first][k.second].first != k.first){
-                    s.push(input[k.first][k.second]);
+                    buf = 0;
+                    if(!k.first)
+                        buf = k.second;
+                    else{
+                        for(size_t m = 0; m < k.first; m++)
+                            buf += sz[m];
+                        buf += k.second;
+                    }
+                    arr[buf] = 1;
+                    inp[buf] = input[k.first][k.second];
+                    if(k.first != i || k.second != j)
+                        p[pos] = buf;
+                    pos = buf;
                     k = pred[k.first][k.second];
                 }
-                s.push(input[k.first][k.second]);
-                while(!s.empty()){
-                    std::cout << s.top() << " ";
-                    s.pop();
+                if(!k.first)
+                    buf = k.second;
+                else{
+                    for(size_t m = 0; m < k.first; m++)
+                        buf += sz[m];
+                    buf += k.second;
                 }
-                std::cout << std::endl;
+                arr[buf] = 1;
+                if(i != initial_state) p[pos] = buf;
+                p[buf] = buf;
+                inp[buf] = input[k.first][k.second];
+                matrix.push_back(arr);
             }
+        }
+        size_t j;
+        std::vector<size_t> cover = greedy_set_cover(matrix);
+        for(auto it : cover){
+            j = it;
+            while(p[j] != j){
+                s.push(inp[j]);
+                j = p[j];
+            }
+            s.push(inp[j]);
+            while(!s.empty()){
+                std::cout << s.top() << " ";
+                s.pop();
+            }
+            std::cout << std::endl;
         }
     }
 };
