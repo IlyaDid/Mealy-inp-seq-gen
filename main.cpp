@@ -9,7 +9,6 @@
 #include <boost/program_options.hpp>
 #include <boost/program_options/value_semantic.hpp>
 #include <boost/program_options/variables_map.hpp>
-#include <getopt.h>
 namespace pt = boost::property_tree;
 namespace po = boost::program_options;
 class MealyFSM{
@@ -161,7 +160,6 @@ private:
                         max[2] = size;
                     }
                 }
-                //std::cout << *u.begin() << std::endl;
             }
             for(size_t i = 0; i < matrix.size(); i++){
                 if(matrix[max[1]][i])
@@ -208,6 +206,7 @@ public:
             transitions.push_back(std::make_pair(find(states.begin(), states.end(), state.first) - states.begin(), arr));
         }
         bool found;
+        //Adding states that don't have transitions to transitions array
         for(size_t i = 0; i < states.size(); i++){
             std::vector<Transition> arr;
             found = 0;
@@ -252,6 +251,7 @@ public:
         std::vector<std::pair<size_t, std::string>> pred = BFSStates(initial_state);
         std::vector<size_t> cover;
         std::vector<std::vector<bool>> matrix(states.size());
+        //Creating a matrix of input sequences and states
         for(size_t i = 0; i < states.size(); i++){
             if(i == initial_state) continue;
             for(size_t k = 0; k < states.size(); k++){
@@ -297,6 +297,7 @@ public:
         std::vector<std::vector<bool>> matrix;
         std::vector<size_t> p(size);
         std::vector<std::string> inp(size);
+        //Creating a matrix of input sequences and transitions
         for(size_t i = 0; i < transitions.size(); i++){
             for(size_t j = 0; j < transitions[i].second.size(); j++){
                 std::vector<bool> arr(size);
