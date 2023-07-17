@@ -13,27 +13,26 @@ namespace pt = boost::property_tree;
 namespace po = boost::program_options;
 class MealyFSM{
 private:
-    class Transition{
-    public:
+    struct Transition{
         size_t to;
         std::string input;
     };
-    class Node{
-    public:
+    //Node is needed only to make a tree for MealyFSM::traverse. A "path" is a branch of a tree or a subtree 
+    struct Node{
         size_t state;
-        std::string input;
-        Node *par;
-        std::vector<Node> children;
+        std::string input; //Input symbol which led to this state from preceding, if initial_state then equals ""
+        Node *par; //Parent state which means preceding state in path
+        std::vector<Node> children; //Vector of adjacent states which weren`t reached from this state in this path before
     };
-    void search(Node *n){
+    void traverse(Node *n) const{
         bool found;
         Node *ptr;
-        for(auto it : transitions[n->state].second){
+        for(const auto& transition : transitions[n->state].second){
             ptr = n;
             found = false;
             //Checking branch possible transitions
-            while(ptr != NULL){
-                if(ptr->par != NULL && ptr->par->state == n->state && ptr->state == it.to && ptr->input == it.input){
+            while(ptr->par != NULL){
+                if(ptr->par->state == n->state && ptr->state == transition.to && ptr->input == transition.input){
                     found = true;
                     break;
                 }
@@ -42,17 +41,17 @@ private:
             //If found adding new transition to the end of the branch
             if(found == false){
                 Node child;
-                child.state = it.to;
-                child.input = it.input;
+                child.state = transition.to;
+                child.input = transition.input;
                 child.par = n;
                 n->children.push_back(child);
             }
         }
-        //Initializing search for each child branch
-        for(size_t i = 0; i < n->children.size(); i++)
-           search(&n->children[i]);
+        //Initializing traverse for each child branch
+        for(auto& child : n->children)
+           traverse(&child);
     }
-    void print(Node *n){
+    void print(Node *n, bool start) const{
         Node *ptr = n;
         std::stack<std::string> s;
         //Adding all transitions in branch to stack
@@ -67,41 +66,45 @@ private:
         }
         //Initializing print for each child branch
         for(size_t i = 0; i < n->children.size(); i++){
-            if(n->par != NULL) std::cout << std::endl;
-            print(&n->children[i]);
+            if(!start) std::cout << std::endl;
+            start = false;
+            print(&n->children[i], start);
         }
     }
-    std::vector<std::pair<size_t, std::string>> BFSStates(size_t u){
+    std::vector<std::pair<size_t, std::string>> BFSStates(const size_t& u) const{
         size_t v;
         std::queue<size_t> q;
         std::vector<bool> color;
+        //Vector of preceding states and input symbols to reach any state
         std::vector<std::pair<size_t, std::string>> pred(states.size());
         for(size_t i = 0; i < states.size(); i++)
             color.push_back(0);
         color[u] = 1;
-        pred[u] = std::make_pair(0, NULL);
+        pred[u] = std::make_pair(0, std::string());
         q.push(u);
         while(!q.empty()){
             v = q.front();
             q.pop();
-            for(auto it : transitions[v].second){
-                if(!color[it.to]){
-                    pred[it.to] = std::make_pair(v, it.input);
-                    color[it.to] = 1;
-                    q.push(it.to);
+            for(const auto& transition : transitions[v].second){
+                if(!color[transition.to]){
+                    pred[transition.to] = std::make_pair(v, transition.input);
+                    color[transition.to] = 1;
+                    q.push(transition.to);
                 }
             }
         }
         return pred;
     }
-    std::vector<std::vector<std::pair<size_t, size_t>>> BFSTransitions(size_t u, std::vector<std::vector<std::string>>& input){
+    std::vector<std::vector<std::pair<size_t, size_t>>> BFSTransitions(const size_t& u, std::vector<std::vector<std::string>>& input) const{
         size_t to;
         std::pair<size_t, size_t> v;
         std::queue<std::pair<size_t, size_t>> q;
         std::vector<std::vector<bool>> color(states.size());
+        //Vector of vectors where indexes mean first - index of state, second - index of transition from this state
+        //Indexes in pair indicate preceding transition in this vector of vectors
         std::vector<std::vector<std::pair<size_t, size_t>>> pred(states.size());
         for(size_t i = 0; i < transitions.size(); i++){
-            for(auto t : transitions[i].second){
+            for(size_t j = 0; j < transitions[i].second.size(); j++){
                 color[i].push_back(0);
                 pred[i].push_back(std::make_pair(0,0));
                 input[i].push_back("");
@@ -130,7 +133,7 @@ private:
         }
         return pred;
     }
-    std::vector<size_t> greedy_set_cover(std::vector<std::vector<bool>> matrix){
+    std::vector<size_t> greedy_set_cover(const std::vector<std::vector<bool>>& matrix) const{
         std::set<size_t> u;
         std::vector<size_t> res;
         std::vector<size_t> max(3);
@@ -174,7 +177,7 @@ public:
     std::vector<std::string> states;
     std::vector<std::pair<size_t, std::vector<Transition>>> transitions;
 
-    bool ReadFromJson(std::string filename){
+    bool ReadFromJson(const std::string& filename){
         pt::ptree root;
         //Reading Json file into ptree
         try{
@@ -184,13 +187,13 @@ public:
             return false;
         }
         //Making an array of transitions from a ptree
-        for(pt::ptree::value_type& state : root.get_child("transitions")){
+        for(const pt::ptree::value_type& state : root.get_child("transitions")){
             std::vector<Transition> arr;
             //Adding states into array
             if(find(states.begin(), states.end(), state.first) == states.end())
                 states.push_back(state.first);
             //Copying each transition from ptree to structure
-            for(pt::ptree::value_type& input : state.second){
+            for(const pt::ptree::value_type& input : state.second){
                 Transition tr;
                 try{
                     if(find(states.begin(), states.end(), input.second.get<std::string>("state")) == states.end())
@@ -210,8 +213,8 @@ public:
         for(size_t i = 0; i < states.size(); i++){
             std::vector<Transition> arr;
             found = 0;
-            for(auto it : transitions){
-                if(it.first == i)
+            for(const auto& state : transitions){
+                if(state.first == i)
                     found = 1;
             }
             if(!found)
@@ -232,20 +235,20 @@ public:
         return true;
     }
 
-    void PathsInpSeqGen(){
+    void PathsInpSeqGen() const{
         //Making a tree root from initial_state
         Node root;
         root.state = initial_state;
         root.input = "";
         root.par = NULL;
         //Starting recursive search for possible transitions
-        search(&root);
+        traverse(&root);
         //Printing input sequences
-        print(&root);
+        print(&root, true);
         std::cout << std::endl;
     }
 
-    void StatesInpSeqGen(){
+    void StatesInpSeqGen() const{
         size_t j;
         std::stack<std::string> s;
         std::vector<std::pair<size_t, std::string>> pred = BFSStates(initial_state);
@@ -267,8 +270,8 @@ public:
             }
         }
         cover = greedy_set_cover(matrix);
-        for(auto it : cover){
-            j = it;
+        for(const auto& state : cover){
+            j = state;
             while(j != initial_state){
                 s.push(pred[j].second.data());
                 j = pred[j].first;
@@ -281,8 +284,10 @@ public:
         }
     }
 
-    void TransitionsInpSeqGen(){
+    void TransitionsInpSeqGen() const{
         std::vector<std::vector<std::string>> input(states.size());
+        //Vector of vectors where indexes mean first - index of state, second - index of transition from this state
+        //Indexes in pair indicate preceding transition in this vector of vectors
         std::vector<std::vector<std::pair<size_t, size_t>>> pred = BFSTransitions(initial_state, input);
         std::stack<std::string> s;
         std::pair<size_t, size_t> k;
@@ -290,9 +295,9 @@ public:
         size_t size = 0;
         size_t buf = 0;
         size_t pos = 0;
-        for(auto it : transitions){
-            sz.push_back(it.second.size());
-            size += it.second.size();
+        for(const auto& state : transitions){
+            sz.push_back(state.second.size());
+            size += state.second.size();
         }
         std::vector<std::vector<bool>> matrix;
         std::vector<size_t> p(size);
@@ -318,6 +323,7 @@ public:
                     pos = buf;
                     k = pred[k.first][k.second];
                 }
+                buf = 0;
                 if(!k.first)
                     buf = k.second;
                 else{
@@ -334,8 +340,8 @@ public:
         }
         size_t j;
         std::vector<size_t> cover = greedy_set_cover(matrix);
-        for(auto it : cover){
-            j = it;
+        for(const auto& state : cover){
+            j = state;
             while(p[j] != j){
                 s.push(inp[j]);
                 j = p[j];
@@ -351,29 +357,26 @@ public:
 };
 int main(int argc, char *argv[]){
     po::options_description desc("Options");
+    po::positional_options_description pos_desc;
     std::string mode;
     std::string file;
     po::variables_map vm;
     desc.add_options()
-        ("mode", po::value<std::string>(&mode), "Select the mode - states, transitions, paths")
-        ("file", po::value<std::string>(&file), "Provide program with a .json file to work")
+        ("help,h", "Show help")
+        ("mode,m", po::value<std::string>(&mode)->required()->default_value(""), "Select the mode : states, transitions, paths")
+        ("file,f", po::value<std::string>(&file)->required()->default_value(""), "Provide program with a .json file to work")
     ;
     po::parsed_options parsed = po::command_line_parser(argc, argv).options(desc).run();
     po::store(parsed, vm);
     po::notify(vm);
-    if(!vm.count("file")){std::cerr<<"Missing a filename"<<std::endl;return 1;}
-    if(!vm.count("mode")){std::cerr<<"Missing mode"<<std::endl;return 2;}
+    if(vm.count("help")){std::cerr<<desc<<std::endl;return 0;}
     MealyFSM machine;
-    if(!machine.ReadFromJson(file)) return 3;
+    if(!machine.ReadFromJson(file)) return 1;
     if(mode == "states")
         machine.StatesInpSeqGen();
     else if(mode == "transitions")
         machine.TransitionsInpSeqGen();
     else if(mode == "paths")
         machine.PathsInpSeqGen();
-    else{
-        std::cerr << "Invalid mode" << std::endl;
-        return 3;
-    }
     return 0;
 }

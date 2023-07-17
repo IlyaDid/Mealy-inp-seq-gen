@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 project(Mealy_inp_seq_gen)
-set(CMAKE_CXX_FLAGS "-lboost_program_options")
+find_package(Boost COMPONENTS program_options REQUIRED)
 add_compile_options(-Wall -Werror)
 add_executable(mealy_inp_seq_gen main.cpp)
+target_include_directories(mealy_inp_seq_gen PRIVATE ${Boost_INCLUDE_DIR})
+target_link_libraries(mealy_inp_seq_gen ${Boost_LIBRARIES})
