@@ -32,9 +32,9 @@ public:
     size_t initial_state;
     std::vector<std::string> states;
     std::vector<std::pair<size_t, std::vector<Transition>>> transitions;
-    bool ReadFromJson(const std::string& filename);
     void PathsInpSeqGen() const;
     void StatesInpSeqGen() const;
     void TransitionsInpSeqGen() const;
+    explicit MealyFSM(const std::string& filename);
 };
 #endif

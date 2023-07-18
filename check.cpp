@@ -95,11 +95,16 @@ int main(int argc, char *argv[]){
     po::store(parsed, vm);
     po::notify(vm);
     if(vm.count("help")){std::cerr<<desc<<std::endl;return 0;}
-    MealyFSM machine;
-    if(!machine.ReadFromJson(file)) return 1;
-    if(mode == "states")
-        StatesCheck(machine,input);
-    else if(mode == "transitions")
-        TransitionsCheck(machine,input);
+    try{
+        MealyFSM machine(file);
+        if(mode == "states")
+            StatesCheck(machine,input);
+        else if(mode == "transitions")
+            TransitionsCheck(machine,input);
+    }
+    catch(std::runtime_error& e){
+        std::cerr<<e.what()<<std::endl;
+        return 1;
+    }
     return 0;
 }

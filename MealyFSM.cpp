@@ -148,14 +148,13 @@ std::vector<size_t> MealyFSM::greedy_set_cover(const std::vector<std::vector<boo
     }
     return res;
 }
-bool MealyFSM::ReadFromJson(const std::string& filename){
+MealyFSM::MealyFSM(const std::string& filename){
     pt::ptree root;
     //Reading Json file into ptree
     try{
         pt::read_json(filename, root);
     }catch(pt::json_parser::json_parser_error& e1){
-        std::cerr << e1.what() << std::endl;
-        return false;
+        throw std::runtime_error(e1.what());
     }
     //Making an array of transitions from a ptree
     for(const pt::ptree::value_type& state : root.get_child("transitions")){
@@ -172,8 +171,7 @@ bool MealyFSM::ReadFromJson(const std::string& filename){
                 tr.input = input.first;
                 tr.to = find(states.begin(), states.end(), input.second.get<std::string>("state")) - states.begin();
             }catch(pt::ptree_bad_path& e2){
-                std::cerr << e2.what() << std::endl;
-                return false;
+                throw std::runtime_error(e2.what());
             }
             arr.push_back(tr);
         }
@@ -196,14 +194,11 @@ bool MealyFSM::ReadFromJson(const std::string& filename){
         if(find(states.begin(), states.end(), root.get<std::string>("initial_state")) != states.end())
             initial_state = find(states.begin(), states.end(), root.get<std::string>("initial_state")) - states.begin();
         else{
-            std::cerr << "Invalid initial_state" << std::endl;
-            return false;
+            throw std::runtime_error("Invalid initial_state");
         }
     }catch(pt::ptree_bad_path& e3){
-        std::cerr << e3.what() << std::endl;
-        return false;
+        throw std::runtime_error(e3.what());
     }
-    return true;
 }
 void MealyFSM::PathsInpSeqGen() const{
     //Making a tree root from initial_state
