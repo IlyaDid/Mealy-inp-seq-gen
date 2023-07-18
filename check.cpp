@@ -15,11 +15,11 @@ void StatesCheck(const MealyFSM& machine, const std::string& input){
         if(i != machine.initial_state) s.insert(i);
     while(!in.eof()){
         getline(in, buf);
-        for(auto ch : buf){
+        for(const auto& ch : buf){
             if(ch != ' ') symb += ch;
             else{
                 found = false;
-                for(auto transition : machine.transitions[state].second){
+                for(const auto& transition : machine.transitions[state].second){
                     if(transition.input == symb){
                         state = transition.to;
                         s.erase(state);
@@ -35,7 +35,7 @@ void StatesCheck(const MealyFSM& machine, const std::string& input){
     if(s.empty()) std::cout<<"OK"<<std::endl;
     else{
         std::cout<<"The following states weren`t covered: ";
-        for(auto st : s)
+        for(const auto& st : s)
             std::cout<<machine.states[st]<<" ";
         std::cout<<std::endl; 
     }
@@ -49,16 +49,16 @@ void TransitionsCheck(const MealyFSM& machine, const std::string& input){
     state = machine.initial_state;
     std::ifstream in(input, std::ios_base::in);
     for(size_t i = 0; i < machine.transitions.size(); i++){
-        for(auto transition : machine.transitions[i].second)
+        for(const auto& transition : machine.transitions[i].second)
             t.insert(std::make_pair(i,transition.to));
     }
     while(!in.eof()){
         getline(in, buf);
-        for(auto ch : buf){
+        for(const auto& ch : buf){
             if(ch != ' ') symb += ch;
             else{
                 found = false;
-                for(auto transition : machine.transitions[state].second){
+                for(const auto& transition : machine.transitions[state].second){
                     if(transition.input == symb){
                         t.erase(std::make_pair(state, transition.to));
                         symb.clear();
@@ -74,7 +74,7 @@ void TransitionsCheck(const MealyFSM& machine, const std::string& input){
     if(t.empty()) std::cout<<"OK"<<std::endl;
     else{
         std::cout<<"The following transitions weren`t covered:"<<std::endl;
-        for(auto transition : t)
+        for(const auto& transition : t)
             std::cout<<"From: "<<machine.states[transition.first]<<" Input: "<<machine.transitions[transition.first].second[transition.second].input<<" To: "<<machine.states[machine.transitions[transition.first].second[transition.second].to]<<std::endl;
     }
 }
