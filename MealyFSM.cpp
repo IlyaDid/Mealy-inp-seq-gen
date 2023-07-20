@@ -243,7 +243,6 @@ void MealyFSM::StatesInpSeqGen() const{
     }
     cover = greedy_set_cover(matrix);
     for(const auto& state : cover){
-        if(pred[state].second == std::string()) continue;
         j = state;
         while(j != initial_state){
             s.push(pred[j].second.data());
