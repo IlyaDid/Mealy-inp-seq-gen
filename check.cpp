@@ -15,6 +15,7 @@ void StatesCheck(const MealyFSM& machine, const std::string& input){
         if(i != machine.initial_state) s.insert(i);
     while(!in.eof()){
         getline(in, buf);
+        state = machine.initial_state;
         for(const auto& ch : buf){
             if(ch != ' ') symb += ch;
             else{
@@ -49,20 +50,21 @@ void TransitionsCheck(const MealyFSM& machine, const std::string& input){
     state = machine.initial_state;
     std::ifstream in(input, std::ios_base::in);
     for(size_t i = 0; i < machine.transitions.size(); i++){
-        for(const auto& transition : machine.transitions[i].second)
-            t.insert(std::make_pair(i,transition.to));
+        for(size_t j = 0; j < machine.transitions[i].second.size(); j++)
+            t.insert(std::make_pair(i,j));
     }
     while(!in.eof()){
         getline(in, buf);
+        state = machine.initial_state;
         for(const auto& ch : buf){
             if(ch != ' ') symb += ch;
             else{
                 found = false;
-                for(const auto& transition : machine.transitions[state].second){
-                    if(transition.input == symb){
-                        t.erase(std::make_pair(state, transition.to));
+                for(size_t i = 0; i < machine.transitions[state].second.size(); i++){
+                    if(machine.transitions[state].second[i].input == symb){
+                        t.erase(std::make_pair(state, i));
                         symb.clear();
-                        state = transition.to;
+                        state = machine.transitions[state].second[i].to;
                         found = true;
                         break;
                     }
