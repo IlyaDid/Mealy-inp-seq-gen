@@ -29,7 +29,7 @@ void StatesCheck(const MealyFSM& machine, const std::string& input){
                         break;
                     }
                 }
-                if(!found){std::cerr<<"Invalid input sequence"<<std::endl;return;}
+                if(!found && !machine.transitions[state].second.size()){std::cerr<<"Invalid input sequence"<<std::endl;return;}
             }
         }
     }

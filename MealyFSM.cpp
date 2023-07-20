@@ -52,9 +52,11 @@ std::vector<std::pair<size_t, std::string>> MealyFSM::BFSStates(const size_t& u)
     std::queue<size_t> q;
     std::vector<bool> color;
     //Vector of preceding states and input symbols to reach any state
-    std::vector<std::pair<size_t, std::string>> pred(states.size());
-    for(size_t i = 0; i < states.size(); i++)
+    std::vector<std::pair<size_t, std::string>> pred;
+    for(size_t i = 0; i < states.size(); i++){
         color.push_back(0);
+        pred.push_back(std::make_pair(0, std::string()));
+    }
     color[u] = 1;
     pred[u] = std::make_pair(0, std::string());
     q.push(u);
@@ -219,6 +221,11 @@ void MealyFSM::StatesInpSeqGen() const{
     std::vector<std::pair<size_t, std::string>> pred = BFSStates(initial_state);
     std::vector<size_t> cover;
     std::vector<std::vector<bool>> matrix(states.size());
+    //Checking if there are unreacheable states
+    for(size_t i = 0; i < states.size(); i++){
+        if(pred[i].second == std::string() && i != initial_state)
+            std::cerr<<"State "<<states[i]<<" is unreacheable"<<std::endl;
+    }
     //Creating a matrix of input sequences and states
     for(size_t i = 0; i < states.size(); i++){
         if(i == initial_state) continue;
@@ -236,6 +243,7 @@ void MealyFSM::StatesInpSeqGen() const{
     }
     cover = greedy_set_cover(matrix);
     for(const auto& state : cover){
+        if(pred[state].second == std::string()) continue;
         j = state;
         while(j != initial_state){
             s.push(pred[j].second.data());
