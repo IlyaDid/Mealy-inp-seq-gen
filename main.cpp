@@ -10,8 +10,8 @@ int main(int argc, char *argv[]){
     po::variables_map vm;
     desc.add_options()
         ("help,h", "Show help")
-        ("mode,m", po::value<std::string>(&mode)->required()->default_value(""), "Select the mode : states, transitions, paths")
-        ("file,f", po::value<std::string>(&file)->required()->default_value(""), "Provide program with a .json file to work")
+        ("mode,m", po::value<std::string>(&mode)->required(), "Select the mode : states, transitions, paths")
+        ("file,f", po::value<std::string>(&file)->required(), "Provide program with a .json file to work")
     ;
     po::parsed_options parsed = po::command_line_parser(argc, argv).options(desc).run();
     po::store(parsed, vm);
@@ -25,6 +25,8 @@ int main(int argc, char *argv[]){
             machine.TransitionsInpSeqGen();
         else if(mode == "paths")
             machine.PathsInpSeqGen();
+        else
+            std::cerr << "Invalid mode" << std::endl;
     }
     catch(std::runtime_error& e){
         std::cerr<<e.what()<<std::endl;

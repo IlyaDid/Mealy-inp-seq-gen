@@ -15,21 +15,23 @@ void StatesCheck(const MealyFSM& machine, const std::string& input){
         if(i != machine.initial_state) s.insert(i);
     while(!in.eof()){
         getline(in, buf);
-        state = machine.initial_state;
-        for(const auto& ch : buf){
-            if(ch != ' ') symb += ch;
-            else{
-                found = false;
-                for(const auto& transition : machine.transitions[state].second){
-                    if(transition.input == symb){
-                        state = transition.to;
-                        s.erase(state);
-                        symb.clear();
-                        found = true;
-                        break;
+        if(buf.size() != 0 && buf[0] != ' '){
+            state = machine.initial_state;
+            for(const auto& ch : buf){
+                if(ch != ' ' && ch != '\0') symb += ch;
+                else{
+                    found = false;
+                    for(const auto& transition : machine.transitions[state].second){
+                        if(transition.input == symb){
+                            state = transition.to;
+                            s.erase(state);
+                            symb.clear();
+                            found = true;
+                            break;
+                        }
                     }
+                    if(!found){std::cerr<<"Invalid input sequence"<<std::endl;return;}
                 }
-                if(!found && !machine.transitions[state].second.size()){std::cerr<<"Invalid input sequence"<<std::endl;return;}
             }
         }
     }
@@ -56,20 +58,22 @@ void TransitionsCheck(const MealyFSM& machine, const std::string& input){
     while(!in.eof()){
         getline(in, buf);
         state = machine.initial_state;
-        for(const auto& ch : buf){
-            if(ch != ' ') symb += ch;
-            else{
-                found = false;
-                for(size_t i = 0; i < machine.transitions[state].second.size(); i++){
-                    if(machine.transitions[state].second[i].input == symb){
-                        t.erase(std::make_pair(state, i));
-                        symb.clear();
-                        state = machine.transitions[state].second[i].to;
-                        found = true;
-                        break;
+        if(buf.size() != 0 && buf[0] != ' '){
+            for(const auto& ch : buf){
+                if(ch != ' ' && ch != '\0') symb += ch;
+                else{
+                    found = false;
+                    for(size_t i = 0; i < machine.transitions[state].second.size(); i++){
+                        if(machine.transitions[state].second[i].input == symb){
+                            t.erase(std::make_pair(state, i));
+                            symb.clear();
+                            state = machine.transitions[state].second[i].to;
+                            found = true;
+                            break;
+                        }
                     }
+                    if(!found || !machine.transitions[state].second.size()){std::cerr<<"Invalid input sequence"<<std::endl;return;}
                 }
-                if(!found){std::cerr<<"Invalid input sequence"<<std::endl;return;}
             }
         }
     }
@@ -89,9 +93,9 @@ int main(int argc, char *argv[]){
     po::variables_map vm;
     desc.add_options()
         ("help,h", "Show help")
-        ("mode,m", po::value<std::string>(&mode)->required()->default_value(""), "Select the mode : states, transitions")
-        ("file,f", po::value<std::string>(&file)->required()->default_value(""), "Provide program with a .json file to work")
-        ("input,i", po::value<std::string>(&input)->required()->default_value(""), "Provide program with input sequences file")
+        ("mode,m", po::value<std::string>(&mode)->required(), "Select the mode : states, transitions")
+        ("file,f", po::value<std::string>(&file)->required(), "Provide program with a .json file to work")
+        ("input,i", po::value<std::string>(&input)->required(), "Provide program with input sequences file")
     ;
     po::parsed_options parsed = po::command_line_parser(argc, argv).options(desc).run();
     po::store(parsed, vm);
@@ -103,6 +107,8 @@ int main(int argc, char *argv[]){
             StatesCheck(machine,input);
         else if(mode == "transitions")
             TransitionsCheck(machine,input);
+        else
+            std::cerr << "Invalid mode" << std::endl;
     }
     catch(std::runtime_error& e){
         std::cerr<<e.what()<<std::endl;

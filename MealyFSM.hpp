@@ -2,14 +2,7 @@
 #define Mealy_FSM_H_
 #include <string>
 #include <vector>
-#include <stack>
-#include <list>
-#include <queue>
-#include <vector>
 #include <iostream>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
-#include <boost/program_options.hpp>
 class MealyFSM{
 private:
     struct Transition{
@@ -24,7 +17,7 @@ private:
         std::vector<Node> children; //Vector of adjacent states which weren`t reached from this state in this path before
     };
     void traverse(Node *n) const;
-    void print(Node *n, bool start) const;
+    void print(Node *n) const;
     std::vector<std::pair<size_t, std::string>> BFSStates(const size_t& u) const;
     std::vector<std::vector<std::pair<size_t, size_t>>> BFSTransitions(const size_t& u, std::vector<std::vector<std::string>>& input) const;
     std::vector<size_t> greedy_set_cover(const std::vector<std::vector<bool>>& matrix) const;

@@ -1,4 +1,10 @@
 #include "MealyFSM.hpp"
+#include <stack>
+#include <list>
+#include <queue>
+#include <set>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 namespace pt = boost::property_tree;
 void MealyFSM::traverse(Node *n) const{
     bool found;
@@ -27,25 +33,25 @@ void MealyFSM::traverse(Node *n) const{
     for(auto& child : n->children)
         traverse(&child);
 }
-void MealyFSM::print(Node *n, bool start) const{
+void MealyFSM::print(Node *n) const{
     Node *ptr = n;
     std::stack<std::string> s;
-    //Adding all transitions in branch to stack
-    while(ptr->par != NULL){
-        s.push(ptr->input);
-        ptr = ptr->par;
-    }
-    //Printing input symbols
-    while(!s.empty()){
-        std::cout << s.top() << " ";
-        s.pop();
+    if(!n->children.size()){
+        //Adding all transitions in branch to stack
+        while(ptr->par != NULL){
+            s.push(ptr->input);
+            ptr = ptr->par;
+        }
+        //Printing input symbols
+        while(!s.empty()){
+            std::cout << s.top() << " ";
+            s.pop();
+        }
+        std::cout << std::endl;
     }
     //Initializing print for each child branch
-    for(size_t i = 0; i < n->children.size(); i++){
-        if(!start) std::cout << std::endl;
-        start = false;
-        print(&n->children[i], start);
-    }
+    for(size_t i = 0; i < n->children.size(); i++)
+        print(&n->children[i]);
 }
 std::vector<std::pair<size_t, std::string>> MealyFSM::BFSStates(const size_t& u) const{
     size_t v;
@@ -161,15 +167,46 @@ MealyFSM::MealyFSM(const std::string& filename){
     //Making an array of transitions from a ptree
     for(const pt::ptree::value_type& state : root.get_child("transitions")){
         std::vector<Transition> arr;
+        std::vector<std::string>::iterator pos;
         //Adding states into array
-        if(find(states.begin(), states.end(), state.first) == states.end())
-            states.push_back(state.first);
+        try{
+            if((pos = find(states.begin(), states.end(), state.first)) == states.end()){
+                states.push_back(state.first);
+                if(state.first == root.get<std::string>("initial_state"))
+                    initial_state = states.size() - 1;
+            }
+            else{
+                if((pos - states.begin() >=0 && abs(pos - states.begin()) < transitions.size())){
+                    for(const pt::ptree::value_type& input : state.second){
+                        Transition tr;
+                        try{
+                            if(find(states.begin(), states.end(), input.second.get<std::string>("state")) == states.end()){
+                                states.push_back(input.second.get<std::string>("state"));
+                                if(input.second.get<std::string>("state") == root.get<std::string>("initial_state"))
+                                    initial_state = states.size() - 1;
+                            }
+                            tr.input = input.first;
+                            tr.to = find(states.begin(), states.end(), input.second.get<std::string>("state")) - states.begin();
+                        }catch(pt::ptree_bad_path& e2){
+                            throw std::runtime_error(e2.what());
+                        }
+                        transitions[pos-states.begin()].second.push_back(tr);
+                    }
+                    continue;
+                }
+            }
+        }catch(pt::ptree_bad_path& e3){
+            throw std::runtime_error(e3.what());
+        }
         //Copying each transition from ptree to structure
         for(const pt::ptree::value_type& input : state.second){
             Transition tr;
             try{
-                if(find(states.begin(), states.end(), input.second.get<std::string>("state")) == states.end())
+                if(find(states.begin(), states.end(), input.second.get<std::string>("state")) == states.end()){
                     states.push_back(input.second.get<std::string>("state"));
+                    if(input.second.get<std::string>("state") == root.get<std::string>("initial_state"))
+                        initial_state = states.size() - 1;
+                }
                 tr.input = input.first;
                 tr.to = find(states.begin(), states.end(), input.second.get<std::string>("state")) - states.begin();
             }catch(pt::ptree_bad_path& e2){
@@ -191,16 +228,6 @@ MealyFSM::MealyFSM(const std::string& filename){
         if(!found)
             transitions.push_back(std::make_pair(i, arr));
     }
-    //Seeking position of initial_state in states array
-    try{
-        if(find(states.begin(), states.end(), root.get<std::string>("initial_state")) != states.end())
-            initial_state = find(states.begin(), states.end(), root.get<std::string>("initial_state")) - states.begin();
-        else{
-            throw std::runtime_error("Invalid initial_state");
-        }
-    }catch(pt::ptree_bad_path& e3){
-        throw std::runtime_error(e3.what());
-    }
 }
 void MealyFSM::PathsInpSeqGen() const{
     //Making a tree root from initial_state
@@ -211,8 +238,7 @@ void MealyFSM::PathsInpSeqGen() const{
     //Starting recursive search for possible transitions
     traverse(&root);
     //Printing input sequences
-    print(&root, true);
-    std::cout << std::endl;
+    print(&root);
 }
 
 void MealyFSM::StatesInpSeqGen() const{
