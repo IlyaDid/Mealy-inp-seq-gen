@@ -65,7 +65,7 @@ void TransitionsCheck(const MealyFSM& machine, const std::string& input){
                     break;
                 }
             }
-            if(!found || !machine.transitions[state].second.size()){
+            if(!found){
                 std::cerr<<"Invalid input sequence"<<std::endl;
                 return;
             }

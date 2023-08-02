@@ -242,16 +242,19 @@ void MealyFSM::PathsInpSeqGen() const{
 }
 
 void MealyFSM::StatesInpSeqGen() const{
-    size_t j;
+    size_t j = 0;
     std::stack<std::string> s;
     std::vector<std::pair<size_t, std::string>> pred = BFSStates(initial_state);
     std::vector<size_t> cover;
     std::vector<std::vector<bool>> matrix(states.size());
     //Checking if there are unreacheable states
     for(size_t i = 0; i < states.size(); i++){
-        if(pred[i].second == std::string() && i != initial_state)
+        if(pred[i].second == std::string() && i != initial_state){
             std::cerr<<"State "<<states[i]<<" is unreacheable"<<std::endl;
+            j = 1;
+        }
     }
+    if(j) return;
     //Creating a matrix of input sequences and states
     for(size_t i = 0; i < states.size(); i++){
         if(i == initial_state) continue;
@@ -293,6 +296,16 @@ void MealyFSM::TransitionsInpSeqGen() const{
     size_t size = 0;
     size_t buf = 0;
     size_t pos = 0;
+    for(size_t i = 0; i < input.size(); i++){
+        for(size_t j = 0; j < input[i].size(); j++){
+            if(input[i][j] == ""){
+                std::cerr << "Transition " << states[transitions[i].first] << "->"<< transitions[i].second[j].input << "->" << states[transitions[i].second[j].to] << " is unreacheable" << std::endl;
+                buf = 1;
+            }
+        }
+    }
+    if(buf) return;
+    buf = 0;
     for(const auto& state : transitions){
         sz.push_back(state.second.size());
         size += state.second.size();
