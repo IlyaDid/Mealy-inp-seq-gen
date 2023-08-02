@@ -2,7 +2,6 @@
 #define Mealy_FSM_H_
 #include <string>
 #include <vector>
-#include <iostream>
 class MealyFSM{
 private:
     struct Transition{

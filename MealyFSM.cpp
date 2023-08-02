@@ -1,6 +1,6 @@
 #include "MealyFSM.hpp"
+#include <iostream>
 #include <stack>
-#include <list>
 #include <queue>
 #include <set>
 #include <boost/property_tree/ptree.hpp>

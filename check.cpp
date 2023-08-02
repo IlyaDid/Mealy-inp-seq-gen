@@ -1,8 +1,7 @@
 #include "MealyFSM.hpp"
+#include <iostream>
 #include <fstream>
 #include <boost/program_options.hpp>
-#include <boost/program_options/value_semantic.hpp>
-#include <boost/program_options/variables_map.hpp>
 void StatesCheck(const MealyFSM& machine, const std::string& input){
     bool found;
     size_t state;
@@ -18,7 +17,7 @@ void StatesCheck(const MealyFSM& machine, const std::string& input){
         if(buf.size() != 0 && buf[0] != ' '){
             state = machine.initial_state;
             for(const auto& ch : buf){
-                if(ch != ' ' && ch != '\0') symb += ch;
+                if(ch != ' ') symb += ch;
                 else{
                     found = false;
                     for(const auto& transition : machine.transitions[state].second){
@@ -60,7 +59,7 @@ void TransitionsCheck(const MealyFSM& machine, const std::string& input){
         state = machine.initial_state;
         if(buf.size() != 0 && buf[0] != ' '){
             for(const auto& ch : buf){
-                if(ch != ' ' && ch != '\0') symb += ch;
+                if(ch != ' ') symb += ch;
                 else{
                     found = false;
                     for(size_t i = 0; i < machine.transitions[state].second.size(); i++){
@@ -87,6 +86,7 @@ void TransitionsCheck(const MealyFSM& machine, const std::string& input){
 namespace po = boost::program_options;
 int main(int argc, char *argv[]){
     po::options_description desc("Options");
+    po::positional_options_description pos_desc;
     std::string mode;
     std::string file;
     std::string input;
@@ -94,13 +94,14 @@ int main(int argc, char *argv[]){
     desc.add_options()
         ("help,h", "Show help")
         ("mode,m", po::value<std::string>(&mode)->required(), "Select the mode : states, transitions")
-        ("file,f", po::value<std::string>(&file)->required(), "Provide program with a .json file to work")
-        ("input,i", po::value<std::string>(&input)->required(), "Provide program with input sequences file")
+        ("file,f", po::value<std::string>(&file)->required(), "JSON file with description of Mealy finite state machine")
+        ("input,i", po::value<std::string>(&input)->required(), "Input sequences file")
     ;
-    po::parsed_options parsed = po::command_line_parser(argc, argv).options(desc).run();
+    pos_desc.add("file", 1);
+    po::parsed_options parsed = po::command_line_parser(argc, argv).options(desc).positional(pos_desc).run();
     po::store(parsed, vm);
-    po::notify(vm);
     if(vm.count("help")){std::cerr<<desc<<std::endl;return 0;}
+    po::notify(vm);
     try{
         MealyFSM machine(file);
         if(mode == "states")
