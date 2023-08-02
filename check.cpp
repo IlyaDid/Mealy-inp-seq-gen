@@ -2,36 +2,32 @@
 #include <iostream>
 #include <fstream>
 #include <boost/program_options.hpp>
+#include <boost/algorithm/string.hpp>
 void StatesCheck(const MealyFSM& machine, const std::string& input){
     bool found;
     size_t state;
     std::set<size_t> s;
     std::string buf;
-    std::string symb;
-    state = machine.initial_state;
     std::ifstream in(input, std::ios_base::in);
+    std::vector<std::string> line;
     for(size_t i = 0; i < machine.states.size(); i++)
         if(i != machine.initial_state) s.insert(i);
     while(!in.eof()){
         getline(in, buf);
-        if(buf.size() != 0 && buf[0] != ' '){
-            state = machine.initial_state;
-            for(const auto& ch : buf){
-                if(ch != ' ') symb += ch;
-                else{
-                    found = false;
-                    for(const auto& transition : machine.transitions[state].second){
-                        if(transition.input == symb){
-                            state = transition.to;
-                            s.erase(state);
-                            symb.clear();
-                            found = true;
-                            break;
-                        }
-                    }
-                    if(!found){std::cerr<<"Invalid input sequence"<<std::endl;return;}
+        boost::split(line, buf, boost::is_any_of(" "));
+        state = machine.initial_state;
+        for(const auto& symb : line){
+            if(symb == "") break;
+            found = false;
+            for(const auto& transition : machine.transitions[state].second){
+                if(transition.input == symb){
+                    state = transition.to;
+                    s.erase(state);
+                    found = true;
+                    break;
                 }
             }
+            if(!found){std::cerr<<"Invalid input sequence"<<std::endl;return;}
         }
     }
     if(s.empty()) std::cout<<"OK"<<std::endl;
@@ -48,31 +44,30 @@ void TransitionsCheck(const MealyFSM& machine, const std::string& input){
     std::set<std::pair<size_t, size_t>> t;
     std::string buf;
     std::string symb;
-    state = machine.initial_state;
     std::ifstream in(input, std::ios_base::in);
+    std::vector<std::string> line;
     for(size_t i = 0; i < machine.transitions.size(); i++){
         for(size_t j = 0; j < machine.transitions[i].second.size(); j++)
             t.insert(std::make_pair(i,j));
     }
     while(!in.eof()){
         getline(in, buf);
+        boost::split(line, buf, boost::is_any_of(" "));
         state = machine.initial_state;
-        if(buf.size() != 0 && buf[0] != ' '){
-            for(const auto& ch : buf){
-                if(ch != ' ') symb += ch;
-                else{
-                    found = false;
-                    for(size_t i = 0; i < machine.transitions[state].second.size(); i++){
-                        if(machine.transitions[state].second[i].input == symb){
-                            t.erase(std::make_pair(state, i));
-                            symb.clear();
-                            state = machine.transitions[state].second[i].to;
-                            found = true;
-                            break;
-                        }
-                    }
-                    if(!found || !machine.transitions[state].second.size()){std::cerr<<"Invalid input sequence"<<std::endl;return;}
+        for(const auto& symb : line){
+            if(symb == "") break;
+            found = false;
+            for(size_t i = 0; i < machine.transitions[state].second.size(); i++){
+                if(machine.transitions[state].second[i].input == symb){
+                    t.erase(std::make_pair(state, i));
+                    state = machine.transitions[state].second[i].to;
+                    found = true;
+                    break;
                 }
+            }
+            if(!found || !machine.transitions[state].second.size()){
+                std::cerr<<"Invalid input sequence"<<std::endl;
+                return;
             }
         }
     }
