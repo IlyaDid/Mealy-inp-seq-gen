@@ -53,13 +53,19 @@ void RandomMealyGen(const unsigned int& seed, const std::string& file,const size
                 if(!(color[i])){
                     from = rand()%states_n;
                     while(!color[from]) from = rand()%states_n;
+                    if(arr[from].size() == max){
+                        std::cerr << "Couldn't generate valid machine with this seed. Please try another" << std::endl;
+                        return;
+                    }
                     symb = 0;
                     while(symb != symb_in){
                         for(size_t j = 0; j < arr[from].size(); j++){
                             if(arr[from][j].input == symb){
                                 symb++;
-                                if(symb == symb_in)
+                                if(symb == symb_in){
                                     std::cerr << "Couldn't generate valid machine with this seed. Please try another" << std::endl;
+                                    return;
+                                }
                                 break;
                             }
                             if(j == arr[from].size() - 1){
