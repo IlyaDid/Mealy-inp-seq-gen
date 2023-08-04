@@ -9,7 +9,7 @@ namespace pt = boost::property_tree;
 void MealyFSM::traverse(Node *n) const{
     bool found;
     Node *ptr;
-    for(const auto& transition : transitions[n->state].second){
+    for(const auto& transition : transitions[n->state]){
         ptr = n;
         found = false;
         //Checking branch possible transitions
@@ -69,7 +69,7 @@ std::vector<std::pair<size_t, std::string>> MealyFSM::BFSStates(const size_t& u)
     while(!q.empty()){
         v = q.front();
         q.pop();
-        for(const auto& transition : transitions[v].second){
+        for(const auto& transition : transitions[v]){
             if(!color[transition.to]){
                 pred[transition.to] = std::make_pair(v, transition.input);
                 color[transition.to] = 1;
@@ -88,26 +88,26 @@ std::vector<std::vector<std::pair<size_t, size_t>>> MealyFSM::BFSTransitions(con
     //Indexes in pair indicate preceding transition in this vector of vectors
     std::vector<std::vector<std::pair<size_t, size_t>>> pred(states.size());
     for(size_t i = 0; i < transitions.size(); i++){
-        for(size_t j = 0; j < transitions[i].second.size(); j++){
+        for(size_t j = 0; j < transitions[i].size(); j++){
             color[i].push_back(0);
             pred[i].push_back(std::make_pair(0,0));
             input[i].push_back("");
         }
     }
-    for(size_t i = 0; i < transitions[u].second.size(); i++){
+    for(size_t i = 0; i < transitions[u].size(); i++){
         color[u][i] = 1;
         pred[u][i] = std::make_pair(u, i);
-        input[u][i] = transitions[u].second[i].input;
+        input[u][i] = transitions[u][i].input;
         q.push(std::make_pair(u, i));
     }
     while(!q.empty()){
         v = q.front();
         q.pop();
-        to = transitions[v.first].second[v.second].to;
+        to = transitions[v.first][v.second].to;
         if(to < transitions.size()){
-            for(size_t i = 0; i < transitions[to].second.size(); i++){
+            for(size_t i = 0; i < transitions[to].size(); i++){
                 if(!color[to][i]){
-                    input[to][i] = transitions[to].second[i].input;
+                    input[to][i] = transitions[to][i].input;
                     color[to][i] = 1;
                     pred[to][i] = std::make_pair(v.first, v.second);
                     q.push(std::make_pair(to, i));
@@ -158,6 +158,7 @@ std::vector<size_t> MealyFSM::greedy_set_cover(const std::vector<std::vector<boo
 }
 MealyFSM::MealyFSM(const std::string& filename){
     pt::ptree root;
+    size_t ind;
     //Reading Json file into ptree
     try{
         pt::read_json(filename, root);
@@ -176,7 +177,8 @@ MealyFSM::MealyFSM(const std::string& filename){
                     initial_state = states.size() - 1;
             }
             else{
-                if((pos - states.begin() >=0 && abs(pos - states.begin()) < transitions.size())){
+                ind = pos - states.begin();
+                if((size_t)(pos - states.begin()) < transitions.size()){
                     for(const pt::ptree::value_type& input : state.second){
                         Transition tr;
                         try{
@@ -190,8 +192,10 @@ MealyFSM::MealyFSM(const std::string& filename){
                         }catch(pt::ptree_bad_path& e2){
                             throw std::runtime_error(e2.what());
                         }
-                        transitions[pos-states.begin()].second.push_back(tr);
+                        transitions[ind].push_back(tr);
                     }
+                    for(size_t i = (find(states.begin(), states.end(), state.first) - states.begin()) + 1; i < states.size(); i++)
+                        transitions.push_back(std::vector<Transition>());
                     continue;
                 }
             }
@@ -214,19 +218,9 @@ MealyFSM::MealyFSM(const std::string& filename){
             }
             arr.push_back(tr);
         }
-        transitions.push_back(std::make_pair(find(states.begin(), states.end(), state.first) - states.begin(), arr));
-    }
-    bool found;
-    //Adding states that don't have transitions to transitions array
-    for(size_t i = 0; i < states.size(); i++){
-        std::vector<Transition> arr;
-        found = 0;
-        for(const auto& state : transitions){
-            if(state.first == i)
-                found = 1;
-        }
-        if(!found)
-            transitions.push_back(std::make_pair(i, arr));
+        transitions.push_back(arr);
+        for(size_t i = (find(states.begin(), states.end(), state.first) - states.begin()) + 1; i < states.size(); i++)
+            transitions.push_back(std::vector<Transition>());
     }
 }
 void MealyFSM::PathsInpSeqGen() const{
@@ -299,7 +293,7 @@ void MealyFSM::TransitionsInpSeqGen() const{
     for(size_t i = 0; i < input.size(); i++){
         for(size_t j = 0; j < input[i].size(); j++){
             if(input[i][j] == ""){
-                std::cerr << "Transition " << states[transitions[i].first] << "->"<< transitions[i].second[j].input << "->" << states[transitions[i].second[j].to] << " is unreacheable" << std::endl;
+                std::cerr << "Transition " << states[i] << "->"<< transitions[i][j].input << "->" << states[transitions[i][j].to] << " is unreacheable" << std::endl;
                 buf = 1;
             }
         }
@@ -307,15 +301,15 @@ void MealyFSM::TransitionsInpSeqGen() const{
     if(buf) return;
     buf = 0;
     for(const auto& state : transitions){
-        sz.push_back(state.second.size());
-        size += state.second.size();
+        sz.push_back(state.size());
+        size += state.size();
     }
     std::vector<std::vector<bool>> matrix;
     std::vector<size_t> p(size);
     std::vector<std::string> inp(size);
     //Creating a matrix of input sequences and transitions
     for(size_t i = 0; i < transitions.size(); i++){
-        for(size_t j = 0; j < transitions[i].second.size(); j++){
+        for(size_t j = 0; j < transitions[i].size(); j++){
             std::vector<bool> arr(size);
             k = std::make_pair(i, j);
             while(pred[k.first][k.second].first != k.first){

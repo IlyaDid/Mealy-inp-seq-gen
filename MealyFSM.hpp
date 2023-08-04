@@ -23,7 +23,7 @@ private:
 public:
     size_t initial_state;
     std::vector<std::string> states;
-    std::vector<std::pair<size_t, std::vector<Transition>>> transitions;
+    std::vector<std::vector<Transition>> transitions;
     void PathsInpSeqGen() const;
     void StatesInpSeqGen() const;
     void TransitionsInpSeqGen() const;

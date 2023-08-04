@@ -19,7 +19,7 @@ void StatesCheck(const MealyFSM& machine, const std::string& input){
         for(const auto& symb : line){
             if(symb == "") break;
             found = false;
-            for(const auto& transition : machine.transitions[state].second){
+            for(const auto& transition : machine.transitions[state]){
                 if(transition.input == symb){
                     state = transition.to;
                     s.erase(state);
@@ -47,7 +47,7 @@ void TransitionsCheck(const MealyFSM& machine, const std::string& input){
     std::ifstream in(input, std::ios_base::in);
     std::vector<std::string> line;
     for(size_t i = 0; i < machine.transitions.size(); i++){
-        for(size_t j = 0; j < machine.transitions[i].second.size(); j++)
+        for(size_t j = 0; j < machine.transitions[i].size(); j++)
             t.insert(std::make_pair(i,j));
     }
     while(!in.eof()){
@@ -57,10 +57,10 @@ void TransitionsCheck(const MealyFSM& machine, const std::string& input){
         for(const auto& symb : line){
             if(symb == "") break;
             found = false;
-            for(size_t i = 0; i < machine.transitions[state].second.size(); i++){
-                if(machine.transitions[state].second[i].input == symb){
+            for(size_t i = 0; i < machine.transitions[state].size(); i++){
+                if(machine.transitions[state][i].input == symb){
                     t.erase(std::make_pair(state, i));
-                    state = machine.transitions[state].second[i].to;
+                    state = machine.transitions[state][i].to;
                     found = true;
                     break;
                 }
@@ -75,7 +75,7 @@ void TransitionsCheck(const MealyFSM& machine, const std::string& input){
     else{
         std::cout<<"The following transitions weren`t covered:"<<std::endl;
         for(const auto& transition : t)
-            std::cout<<"From: "<<machine.states[transition.first]<<" Input: "<<machine.transitions[transition.first].second[transition.second].input<<" To: "<<machine.states[machine.transitions[transition.first].second[transition.second].to]<<std::endl;
+            std::cout<<"From: "<<machine.states[transition.first]<<" Input: "<<machine.transitions[transition.first][transition.second].input<<" To: "<<machine.states[machine.transitions[transition.first][transition.second].to]<<std::endl;
     }
 }
 namespace po = boost::program_options;
