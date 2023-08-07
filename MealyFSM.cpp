@@ -194,7 +194,7 @@ MealyFSM::MealyFSM(const std::string& filename){
                         }
                         transitions[ind].push_back(tr);
                     }
-                    for(size_t i = (find(states.begin(), states.end(), state.first) - states.begin()) + 1; i < states.size(); i++)
+                    for(size_t i = transitions.size(); i < states.size(); i++)
                         transitions.push_back(std::vector<Transition>());
                     continue;
                 }
@@ -219,7 +219,7 @@ MealyFSM::MealyFSM(const std::string& filename){
             arr.push_back(tr);
         }
         transitions.push_back(arr);
-        for(size_t i = (find(states.begin(), states.end(), state.first) - states.begin()) + 1; i < states.size(); i++)
+        for(size_t i = transitions.size(); i < states.size(); i++)
             transitions.push_back(std::vector<Transition>());
     }
 }

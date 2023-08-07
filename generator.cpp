@@ -15,6 +15,7 @@ struct Transition{
 };
 void RandomMealyGen(const unsigned int& seed, const std::string& file,const size_t& states_n, const size_t& min, const size_t& max, const size_t& symb_in, const size_t& symb_out){
     srand(seed);
+    start:
     pt::ptree root;
     pt::ptree transitions;
     size_t tr_num; //Number of transitions for current state
@@ -31,7 +32,8 @@ void RandomMealyGen(const unsigned int& seed, const std::string& file,const size
     color[initial_state] = 1;
     q.push(initial_state);
     while(!q.empty()){
-        tr_num = min + rand()%(max - min);
+        if(max - min != 0) tr_num = min + rand()%(max - min);
+        else tr_num = 1;
         for(size_t k = 0; k < tr_num; k++){
             symb = rand()%symb_in;
             while(find(in.begin(), in.end(), symb) != in.end())
@@ -53,19 +55,13 @@ void RandomMealyGen(const unsigned int& seed, const std::string& file,const size
                 if(!(color[i])){
                     from = rand()%states_n;
                     while(!color[from]) from = rand()%states_n;
-                    if(arr[from].size() == max){
-                        std::cerr << "Couldn't generate valid machine with this seed. Please try another" << std::endl;
-                        return;
-                    }
+                    if(arr[from].size() == max) goto start;
                     symb = 0;
                     while(symb != symb_in){
                         for(size_t j = 0; j < arr[from].size(); j++){
                             if(arr[from][j].input == symb){
                                 symb++;
-                                if(symb == symb_in){
-                                    std::cerr << "Couldn't generate valid machine with this seed. Please try another" << std::endl;
-                                    return;
-                                }
+                                if(symb == symb_in) goto start;
                                 break;
                             }
                             if(j == arr[from].size() - 1){
@@ -120,6 +116,7 @@ int main(int argc, char *argv[]){
     po::store(parsed, vm);
     if(vm.count("help")){std::cerr<<desc<<std::endl;return 0;}
     po::notify(vm);
+    if(max - min < 0){std::cerr<<"Maximum number of transitions is less than minimum"<<std::endl;return 1;}
     RandomMealyGen(seed, file, states_n, min, max, symb_in, symb_out);
     return 0;
 }
