@@ -38,7 +38,7 @@ void StatesCheck(const MealyFSM& machine, const std::string& input){
         std::cout<<std::endl; 
     }
 }
-void TransitionsCheck(const MealyFSM& machine, const std::string& input){
+bool TransitionsCheck(const MealyFSM& machine, const std::string& input){
     bool found;
     size_t state;
     std::set<std::pair<size_t, size_t>> t;
@@ -67,7 +67,7 @@ void TransitionsCheck(const MealyFSM& machine, const std::string& input){
             }
             if(!found){
                 std::cerr<<"Invalid input sequence"<<std::endl;
-                return;
+                return false;
             }
         }
     }
@@ -76,7 +76,70 @@ void TransitionsCheck(const MealyFSM& machine, const std::string& input){
         std::cout<<"The following transitions weren`t covered:"<<std::endl;
         for(const auto& transition : t)
             std::cout<<"From: "<<machine.states[transition.first]<<" Input: "<<machine.transitions[transition.first][transition.second].input<<" To: "<<machine.states[machine.transitions[transition.first][transition.second].to]<<std::endl;
+        return false;
     }
+    return true;
+}
+void PathsCheck(MealyFSM machine, std::string input){
+    if(TransitionsCheck(machine, input) != true){std::cerr<<"Not all paths were covered"<<std::endl;return;}
+    std::vector<std::vector<std::string>> lines;
+    std::ifstream in(input, std::ios_base::in);
+    std::string buf;
+    std::set<std::string> not_visited_s;
+    std::set<std::pair<size_t,size_t>> not_visited;
+    std::pair<size_t, size_t> tr;
+    size_t state;
+    bool found;
+    while(!in.eof()){
+        getline(in, buf);
+        lines.push_back(std::vector<std::string>());
+        boost::split(lines.back(), buf, boost::is_any_of(" "));
+    }
+    for(const auto& line : lines){
+        state = machine.initial_state;
+        for(size_t i = 0; i < machine.transitions.size(); i++){
+            for(size_t j = 0; j < machine.transitions[i].size(); j++)
+                not_visited.insert(std::make_pair(i,j));
+        }
+        for(size_t i = 0; i < line.size(); i++){
+            if(line[i] == "") break;
+            found = false;
+            for(size_t j = 0; j < machine.transitions[state].size(); j++){
+                if(machine.transitions[state][j].input == line[i]){
+                    if(not_visited.find(std::make_pair(state,j)) == not_visited.end()){
+                        std::cerr<<"Repeated same transition in one path"<<std::endl;return;}
+                    found = true;
+                    tr = std::make_pair(state, j);
+                    not_visited.erase(std::make_pair(state,j));
+                }
+                else if(not_visited.find(std::make_pair(state,j)) != not_visited.end())
+                    not_visited_s.insert(machine.transitions[state][j].input);
+            }
+            if(!found){std::cerr<<"Invalid input sequence"<<std::endl;return;}
+            for(size_t j = 0; j < lines.size(); j++){
+                if(lines[j].size() > i){
+                    found = true;
+                    for(size_t k = 0; k < i; k++){
+                        if(lines[j][k] != line[k]){
+                            found = false;
+                            break;
+                        }
+                    }
+                    if(found){
+                        for(size_t k = 0; k < machine.transitions[state].size(); k++){
+                            if(machine.transitions[state][k].input == lines[j][i] && not_visited.find(std::make_pair(state,k)) != not_visited.end())
+                                not_visited_s.erase(machine.transitions[state][k].input);
+                        }
+                    }
+                }
+            }
+            if(!not_visited_s.empty()){std::cerr<<"Not all paths were covered"<<std::endl;return;}
+            not_visited_s.clear();
+            state = machine.transitions[tr.first][tr.second].to;
+        }
+        not_visited.clear();
+    }
+    std::cout << "OK" << std::endl;
 }
 namespace po = boost::program_options;
 int main(int argc, char *argv[]){
@@ -103,6 +166,8 @@ int main(int argc, char *argv[]){
             StatesCheck(machine,input);
         else if(mode == "transitions")
             TransitionsCheck(machine,input);
+        else if(mode == "paths")
+            PathsCheck(machine,input);
         else
             std::cerr << "Invalid mode" << std::endl;
     }

@@ -188,6 +188,7 @@ MealyFSM::MealyFSM(const std::string& filename){
                                     initial_state = states.size() - 1;
                             }
                             tr.input = input.first;
+                            tr.output = input.second.get<std::string>("output");
                             tr.to = find(states.begin(), states.end(), input.second.get<std::string>("state")) - states.begin();
                         }catch(pt::ptree_bad_path& e2){
                             throw std::runtime_error(e2.what());
@@ -212,6 +213,7 @@ MealyFSM::MealyFSM(const std::string& filename){
                         initial_state = states.size() - 1;
                 }
                 tr.input = input.first;
+                tr.output = input.second.get<std::string>("output");
                 tr.to = find(states.begin(), states.end(), input.second.get<std::string>("state")) - states.begin();
             }catch(pt::ptree_bad_path& e2){
                 throw std::runtime_error(e2.what());

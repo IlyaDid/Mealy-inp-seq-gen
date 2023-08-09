@@ -7,6 +7,7 @@ private:
     struct Transition{
         size_t to;
         std::string input;
+        std::string output;
     };
     //Node is needed only to make a tree for MealyFSM::traverse. A "path" is a branch of a tree or a subtree 
     struct Node{
