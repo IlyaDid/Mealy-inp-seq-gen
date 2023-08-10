@@ -19,8 +19,6 @@ void RandomMealyGen(const unsigned int& seed, const std::string& file,const size
     pt::ptree root;
     pt::ptree transitions;
     size_t tr_num; //Number of transitions for current state
-    std::vector<size_t> in; //Vector of input symbols for current state
-    size_t symb; //New random symbol
     std::queue<size_t> q;
     std::vector<std::vector<Transition>> arr(states_n);
     std::vector<bool> color;
@@ -34,45 +32,26 @@ void RandomMealyGen(const unsigned int& seed, const std::string& file,const size
     while(!q.empty()){
         if(max - min != 0) tr_num = min + rand()%(max - min);
         else tr_num = 1;
-        for(size_t k = 0; k < tr_num; k++){
-            symb = rand()%symb_in;
-            while(find(in.begin(), in.end(), symb) != in.end())
-                symb = rand()%symb_in;
-            in.push_back(symb);
-        }
         for(size_t j = 0; j < tr_num; j++){
             to = rand()%states_n;
-            arr[q.front()].push_back({in.back(), rand()%symb_out, to});
+            arr[q.front()].push_back({j, rand()%symb_out, to});
             if(!color[to]){
                 q.push(to);
                 color[to] = 1;
             }
-            in.pop_back();
         }
         q.pop();
         if(q.empty()){
             for(size_t i = 0; i < color.size(); i++){
                 if(!(color[i])){
-                    from = rand()%states_n;
-                    while(!color[from]) from = rand()%states_n;
-                    if(arr[from].size() == max) goto start;
-                    symb = 0;
-                    while(symb != symb_in){
-                        for(size_t j = 0; j < arr[from].size(); j++){
-                            if(arr[from][j].input == symb){
-                                symb++;
-                                if(symb == symb_in) goto start;
-                                break;
-                            }
-                            if(j == arr[from].size() - 1){
-                                arr[from].push_back({symb, rand()%symb_out, i});
-                                q.push(i);
-                                color[i] = 1;
-                                symb = states_n;
-                                break;
-                            }
-                        }
+                    from = 0;
+                    while(color[from] != 1 || arr[from].size() == max){
+                        if(from == color.size() - 1) goto start;
+                        from++;
                     }
+                    arr[from].push_back({arr[from].size(), rand()%symb_out, i});
+                    q.push(i);
+                    color[i] = 1;
                     break;
                 }
             }

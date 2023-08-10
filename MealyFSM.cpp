@@ -242,7 +242,7 @@ void MealyFSM::StatesInpSeqGen() const{
     std::stack<std::string> s;
     std::vector<std::pair<size_t, std::string>> pred = BFSStates(initial_state);
     std::vector<size_t> cover;
-    std::vector<std::vector<bool>> matrix(states.size());
+    std::vector<std::vector<bool>> matrix;
     //Checking if there are unreacheable states
     for(size_t i = 0; i < states.size(); i++){
         if(pred[i].second == std::string() && i != initial_state){
@@ -253,6 +253,7 @@ void MealyFSM::StatesInpSeqGen() const{
     if(j) return;
     //Creating a matrix of input sequences and states
     for(size_t i = 0; i < states.size(); i++){
+        matrix.push_back(std::vector<bool>());
         if(i == initial_state) continue;
         for(size_t k = 0; k < states.size(); k++){
             if(k == initial_state)
@@ -266,7 +267,8 @@ void MealyFSM::StatesInpSeqGen() const{
             j = pred[j].first;
         }
     }
-    cover = greedy_set_cover(matrix);
+    if(states.size() != 1) cover = greedy_set_cover(matrix);
+    else cover = {0};
     for(const auto& state : cover){
         j = state;
         while(j != initial_state){
