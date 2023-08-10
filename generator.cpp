@@ -96,6 +96,7 @@ int main(int argc, char *argv[]){
     if(vm.count("help")){std::cerr<<desc<<std::endl;return 0;}
     po::notify(vm);
     if(max - min < 0){std::cerr<<"Maximum number of transitions is less than minimum"<<std::endl;return 1;}
+    if(max > symb_in){std::cerr<<"Maximum number of transitions is more than number of input symbols"<<std::endl;return 1;}
     RandomMealyGen(seed, file, states_n, min, max, symb_in, symb_out);
     return 0;
 }
