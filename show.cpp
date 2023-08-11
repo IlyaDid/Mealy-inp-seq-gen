@@ -6,7 +6,10 @@
 void show(MealyFSM machine){
     std::ofstream out("machine.dot", std::ios_base::out);
     out << "digraph {\n";
+    out << machine.states[machine.initial_state] << "[shape=doublecircle]\n";
     for(size_t i = 0; i < machine.transitions.size(); i++){
+        if(i != machine.initial_state)
+            out << machine.states[i] << "[shape=circle]\n";
         for(size_t j = 0; j < machine.transitions[i].size(); j++)
             out << machine.states[i] << "->" << machine.states[machine.transitions[i][j].to] << "[label=\"" << machine.transitions[i][j].input << "/" << machine.transitions[i][j].output << "\"]\n";
     }
