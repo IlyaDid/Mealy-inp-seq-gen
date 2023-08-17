@@ -3,8 +3,10 @@
 #include <fstream>
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
-void StatesCheck(const MealyFSM& machine, const std::string& input){
+bool StatesCheck(const MealyFSM& machine, const std::string& input){
     bool found;
+    size_t count = 0;
+    size_t s_count = 0;
     size_t state;
     std::set<size_t> s;
     std::string buf;
@@ -14,10 +16,13 @@ void StatesCheck(const MealyFSM& machine, const std::string& input){
         if(i != machine.initial_state) s.insert(i);
     while(!in.eof()){
         getline(in, buf);
+        count++;
+        s_count = 0;
         boost::split(line, buf, boost::is_any_of(" "));
         state = machine.initial_state;
         for(const auto& symb : line){
             if(symb == "") break;
+            s_count++;
             found = false;
             for(const auto& transition : machine.transitions[state]){
                 if(transition.input == symb){
@@ -27,7 +32,7 @@ void StatesCheck(const MealyFSM& machine, const std::string& input){
                     break;
                 }
             }
-            if(!found){std::cerr<<"Invalid input sequence"<<std::endl;return;}
+            if(!found){std::cerr<<"Invalid input sequence on line "<< count << ", symbol " << s_count <<std::endl;return false;}
         }
     }
     if(s.empty()) std::cout<<"OK"<<std::endl;
@@ -36,11 +41,15 @@ void StatesCheck(const MealyFSM& machine, const std::string& input){
         for(const auto& st : s)
             std::cout<<machine.states[st]<<" ";
         std::cout<<std::endl; 
+        return false;
     }
+    return true;
 }
 bool TransitionsCheck(const MealyFSM& machine, const std::string& input){
     bool found;
     size_t state;
+    size_t count = 0;
+    size_t s_count = 0;
     std::set<std::pair<size_t, size_t>> t;
     std::string buf;
     std::string symb;
@@ -52,10 +61,13 @@ bool TransitionsCheck(const MealyFSM& machine, const std::string& input){
     }
     while(!in.eof()){
         getline(in, buf);
+        count++;
+        s_count = 0;
         boost::split(line, buf, boost::is_any_of(" "));
         state = machine.initial_state;
         for(const auto& symb : line){
             if(symb == "") break;
+            s_count++;
             found = false;
             for(size_t i = 0; i < machine.transitions[state].size(); i++){
                 if(machine.transitions[state][i].input == symb){
@@ -65,10 +77,7 @@ bool TransitionsCheck(const MealyFSM& machine, const std::string& input){
                     break;
                 }
             }
-            if(!found){
-                std::cerr<<"Invalid input sequence"<<std::endl;
-                return false;
-            }
+            if(!found){std::cerr<<"Invalid input sequence on line "<< count << ", symbol " << s_count <<std::endl;return false;}
         }
     }
     if(t.empty()) std::cout<<"OK"<<std::endl;
@@ -89,6 +98,8 @@ void PathsCheck(MealyFSM machine, std::string input){
     std::set<std::pair<size_t,size_t>> not_visited;
     std::pair<size_t, size_t> tr;
     size_t state;
+    size_t count = 0;
+    size_t s_count = 0;
     bool found;
     while(!in.eof()){
         getline(in, buf);
@@ -96,6 +107,8 @@ void PathsCheck(MealyFSM machine, std::string input){
         boost::split(lines.back(), buf, boost::is_any_of(" "));
     }
     for(const auto& line : lines){
+        count++;
+        s_count = 0;
         state = machine.initial_state;
         for(size_t i = 0; i < machine.transitions.size(); i++){
             for(size_t j = 0; j < machine.transitions[i].size(); j++)
@@ -103,11 +116,12 @@ void PathsCheck(MealyFSM machine, std::string input){
         }
         for(size_t i = 0; i < line.size(); i++){
             if(line[i] == "") break;
+            s_count++;
             found = false;
             for(size_t j = 0; j < machine.transitions[state].size(); j++){
                 if(machine.transitions[state][j].input == line[i]){
                     if(not_visited.find(std::make_pair(state,j)) == not_visited.end()){
-                        std::cerr<<"Repeated same transition in one path"<<std::endl;return;}
+                        std::cerr<<"Repeated same transition "<< machine.states[state] << "->" <<machine.transitions[state][j].input << "->" <<machine.states[machine.transitions[state][j].to] <<" in path "<< count <<std::endl;return;}
                     found = true;
                     tr = std::make_pair(state, j);
                     not_visited.erase(std::make_pair(state,j));
@@ -115,7 +129,7 @@ void PathsCheck(MealyFSM machine, std::string input){
                 else if(not_visited.find(std::make_pair(state,j)) != not_visited.end())
                     not_visited_s.insert(machine.transitions[state][j].input);
             }
-            if(!found){std::cerr<<"Invalid input sequence"<<std::endl;return;}
+            if(!found){std::cerr<<"Invalid input sequence on line "<< count << ", symbol " << s_count <<std::endl;return;}
             for(size_t j = 0; j < lines.size(); j++){
                 if(lines[j].size() > i){
                     found = true;
@@ -133,7 +147,15 @@ void PathsCheck(MealyFSM machine, std::string input){
                     }
                 }
             }
-            if(!not_visited_s.empty()){std::cerr<<"Not all paths were covered"<<std::endl;return;}
+            if(!not_visited_s.empty()){
+                std::cerr<<"Not all paths were covered. Example: "<<std::endl;
+                for(const auto& symb : not_visited_s){
+                    for(const auto& s : lines[i])
+                        if(s!="") std::cerr << s << " ";
+                    std::cerr << symb << std::endl;
+                }
+                return;
+            }
             not_visited_s.clear();
             state = machine.transitions[tr.first][tr.second].to;
         }
