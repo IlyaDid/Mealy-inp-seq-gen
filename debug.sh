@@ -5,6 +5,11 @@ parametr3=$3
 parametr4=$4
 parametr5=$5
 parametr6=$6
+if [ $# == 0 ];
+then
+echo "bash debug.sh num_seeds num_states min_num_transitions max_num_transitions num_inp_symb num_out_symb"
+exit
+fi
 for((i=0;i<parametr1;i++))
 do
 for((j=1;j<=parametr2;j++))
