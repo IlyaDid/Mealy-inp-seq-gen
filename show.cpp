@@ -3,7 +3,7 @@
 #include <fstream>
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
-void show(MealyFSM machine){
+void show(const MealyFSM& machine){
     std::ofstream out("machine.dot", std::ios_base::out);
     out << "digraph {\n";
     out << machine.states[machine.initial_state] << "[shape=doublecircle]\n";

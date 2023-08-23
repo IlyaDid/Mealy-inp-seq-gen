@@ -225,7 +225,7 @@ MealyFSM::MealyFSM(const std::string& filename){
             transitions.push_back(std::vector<Transition>());
     }
 }
-void MealyFSM::PathsInpSeqGen() const{
+bool MealyFSM::PathsInpSeqGen() const{
     //Making a tree root from initial_state
     Node root;
     root.state = initial_state;
@@ -235,9 +235,10 @@ void MealyFSM::PathsInpSeqGen() const{
     traverse(&root);
     //Printing input sequences
     print(&root);
+    return true;
 }
 
-void MealyFSM::StatesInpSeqGen() const{
+bool MealyFSM::StatesInpSeqGen() const{
     size_t j = 0;
     std::stack<std::string> s;
     std::vector<std::pair<size_t, std::string>> pred = BFSStates(initial_state);
@@ -250,7 +251,7 @@ void MealyFSM::StatesInpSeqGen() const{
             j = 1;
         }
     }
-    if(j) return;
+    if(j) return false;
     //Creating a matrix of input sequences and states
     for(size_t i = 0; i < states.size(); i++){
         matrix.push_back(std::vector<bool>());
@@ -281,9 +282,10 @@ void MealyFSM::StatesInpSeqGen() const{
         }
         std::cout << std::endl;
     }
+    return true;
 }
 
-void MealyFSM::TransitionsInpSeqGen() const{
+bool MealyFSM::TransitionsInpSeqGen() const{
     std::vector<std::vector<std::string>> input(states.size());
     //Vector of vectors where indexes mean first - index of state, second - index of transition from this state
     //Indexes in pair indicate preceding transition in this vector of vectors
@@ -302,7 +304,7 @@ void MealyFSM::TransitionsInpSeqGen() const{
             }
         }
     }
-    if(buf) return;
+    if(buf) return false;
     buf = 0;
     for(const auto& state : transitions){
         sz.push_back(state.size());
@@ -362,4 +364,5 @@ void MealyFSM::TransitionsInpSeqGen() const{
         }
         std::cout << std::endl;
     }
+    return true;
 }

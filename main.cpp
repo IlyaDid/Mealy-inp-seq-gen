@@ -21,11 +21,11 @@ int main(int argc, char *argv[]){
     try{
         MealyFSM machine(file);
         if(mode == "states")
-            machine.StatesInpSeqGen();
+            if(!machine.StatesInpSeqGen()) return 2;
         else if(mode == "transitions")
-            machine.TransitionsInpSeqGen();
+            if(!machine.TransitionsInpSeqGen()) return 3;
         else if(mode == "paths")
-            machine.PathsInpSeqGen();
+            if(!machine.PathsInpSeqGen()) return 4;
         else
             std::cerr << "Invalid mode" << std::endl;
     }

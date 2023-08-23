@@ -25,9 +25,9 @@ public:
     size_t initial_state;
     std::vector<std::string> states;
     std::vector<std::vector<Transition>> transitions;
-    void PathsInpSeqGen() const;
-    void StatesInpSeqGen() const;
-    void TransitionsInpSeqGen() const;
+    bool PathsInpSeqGen() const;
+    bool StatesInpSeqGen() const;
+    bool TransitionsInpSeqGen() const;
     explicit MealyFSM(const std::string& filename);
 };
 #endif

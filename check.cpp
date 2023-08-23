@@ -89,8 +89,7 @@ bool TransitionsCheck(const MealyFSM& machine, const std::string& input){
     }
     return true;
 }
-void PathsCheck(MealyFSM machine, std::string input){
-    if(TransitionsCheck(machine, input) != true){std::cerr<<"Not all paths were covered"<<std::endl;return;}
+bool PathsCheck(MealyFSM machine, std::string input){
     std::vector<std::vector<std::string>> lines;
     std::ifstream in(input, std::ios_base::in);
     std::string buf;
@@ -120,7 +119,7 @@ void PathsCheck(MealyFSM machine, std::string input){
             for(size_t j = 0; j < machine.transitions[state].size(); j++){
                 if(machine.transitions[state][j].input == line[i]){
                     if(not_visited.find(std::make_pair(state,j)) == not_visited.end()){
-                        std::cerr<<"Repeated same transition "<< machine.states[state] << "->" <<machine.transitions[state][j].input << "->" <<machine.states[machine.transitions[state][j].to] <<" in path "<< count <<std::endl;return;}
+                        std::cerr<<"Repeated same transition "<< machine.states[state] << "->" <<machine.transitions[state][j].input << "->" <<machine.states[machine.transitions[state][j].to] <<" in path "<< count <<std::endl;return false;}
                     found = true;
                     tr = std::make_pair(state, j);
                     not_visited.erase(std::make_pair(state,j));
@@ -128,7 +127,7 @@ void PathsCheck(MealyFSM machine, std::string input){
                 else if(not_visited.find(std::make_pair(state,j)) != not_visited.end())
                     not_visited_s.insert(machine.transitions[state][j].input);
             }
-            if(!found && line[i] != ""){std::cerr<<"Invalid input sequence on line "<< count << ", symbol " << s_count <<std::endl;return;}
+            if(!found && line[i] != ""){std::cerr<<"Invalid input sequence on line "<< count << ", symbol " << s_count <<std::endl;return false;}
             for(size_t j = 0; j < lines.size(); j++){
                 if(lines[j].size() > i){
                     found = true;
@@ -153,14 +152,15 @@ void PathsCheck(MealyFSM machine, std::string input){
                         if(s!="") std::cerr << s << " ";
                     std::cerr << symb << std::endl;
                 }
-                return;
+                return false;
             }
             not_visited_s.clear();
-            state = machine.transitions[tr.first][tr.second].to;
+            if(machine.transitions[state].size() > 0) state = machine.transitions[tr.first][tr.second].to;
         }
         not_visited.clear();
     }
     std::cout << "OK" << std::endl;
+    return true;
 }
 namespace po = boost::program_options;
 int main(int argc, char *argv[]){
@@ -172,7 +172,7 @@ int main(int argc, char *argv[]){
     po::variables_map vm;
     desc.add_options()
         ("help,h", "Show help")
-        ("mode,m", po::value<std::string>(&mode)->required(), "Select the mode : states, transitions")
+        ("mode,m", po::value<std::string>(&mode)->required(), "Select the mode : states, transitions, paths")
         ("file,f", po::value<std::string>(&file)->required(), "JSON file with description of Mealy finite state machine")
         ("input,i", po::value<std::string>(&input)->required(), "Input sequences file")
     ;
@@ -183,12 +183,15 @@ int main(int argc, char *argv[]){
     po::notify(vm);
     try{
         MealyFSM machine(file);
-        if(mode == "states")
-            StatesCheck(machine,input);
-        else if(mode == "transitions")
-            TransitionsCheck(machine,input);
-        else if(mode == "paths")
-            PathsCheck(machine,input);
+        if(mode == "states"){
+            if(!StatesCheck(machine,input)) return 2;
+        }
+        else if(mode == "transitions"){
+            if(!TransitionsCheck(machine,input)) return 3;
+        }
+        else if(mode == "paths"){
+            if(!PathsCheck(machine,input)) return 4;
+        }
         else
             std::cerr << "Invalid mode" << std::endl;
     }
