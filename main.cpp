@@ -20,18 +20,6 @@ int main(int argc, char *argv[]){
     po::notify(vm);
     try{
         MealyFSM machine(file);
-        // for(const auto& state : machine.states)
-        //     std::cout << state << " ";
-        // std::cout << std::endl;
-        // std::cout << "Initial state: " << machine.initial_state << std::endl;
-        // for(size_t i = 0; i < machine.transitions.size(); i++){
-        //     for(size_t j = 0; j < machine.transitions[i].size(); j++){
-        //         std::cout << "From: " << i;
-        //         std::cout << " To: " << machine.transitions[i][j].to;
-        //         std::cout << " Input: " << machine.transitions[i][j].input;
-        //         std::cout << std::endl;
-        //     }
-        // }
         if(mode == "states")
             machine.StatesInpSeqGen();
         else if(mode == "transitions")

@@ -115,7 +115,6 @@ void PathsCheck(MealyFSM machine, std::string input){
                 not_visited.insert(std::make_pair(i,j));
         }
         for(size_t i = 0; i < line.size(); i++){
-            if(line[i] == "") break;
             s_count++;
             found = false;
             for(size_t j = 0; j < machine.transitions[state].size(); j++){
@@ -129,7 +128,7 @@ void PathsCheck(MealyFSM machine, std::string input){
                 else if(not_visited.find(std::make_pair(state,j)) != not_visited.end())
                     not_visited_s.insert(machine.transitions[state][j].input);
             }
-            if(!found){std::cerr<<"Invalid input sequence on line "<< count << ", symbol " << s_count <<std::endl;return;}
+            if(!found && line[i] != ""){std::cerr<<"Invalid input sequence on line "<< count << ", symbol " << s_count <<std::endl;return;}
             for(size_t j = 0; j < lines.size(); j++){
                 if(lines[j].size() > i){
                     found = true;
