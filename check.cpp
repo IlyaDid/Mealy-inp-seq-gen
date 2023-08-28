@@ -89,7 +89,7 @@ bool TransitionsCheck(const MealyFSM& machine, const std::string& input){
     }
     return true;
 }
-bool PathsCheck(MealyFSM machine, std::string input){
+bool PathsCheck(const MealyFSM& machine, std::string input){
     std::vector<std::vector<std::string>> lines;
     std::ifstream in(input, std::ios_base::in);
     std::string buf;

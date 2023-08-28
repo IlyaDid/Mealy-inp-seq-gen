@@ -20,12 +20,15 @@ int main(int argc, char *argv[]){
     po::notify(vm);
     try{
         MealyFSM machine(file);
-        if(mode == "states")
+        if(mode == "states"){
             if(!machine.StatesInpSeqGen()) return 2;
-        else if(mode == "transitions")
+        }
+        else if(mode == "transitions"){
             if(!machine.TransitionsInpSeqGen()) return 3;
-        else if(mode == "paths")
+        }
+        else if(mode == "paths"){
             if(!machine.PathsInpSeqGen()) return 4;
+        }
         else
             std::cerr << "Invalid mode" << std::endl;
     }
